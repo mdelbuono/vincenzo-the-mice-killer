@@ -31,7 +31,7 @@
             <!-- Stats Bar -->
             <div class="dashboard">
                 <div class="stat-box stat-score">
-                    <div class="stat-label">Score</div>
+                    <div class="stat-label">Kibbles</div>
                     <div class="stat-value" id="hud-score">0</div>
                 </div>
                 <div class="stat-box stat-caught">
@@ -109,9 +109,10 @@
             <div class="mission-box" id="start-mission-desc">
                 <strong>Campaign Rules:</strong>
                 <ul>
-                    <li>Level 1 (Living Room): Catch <strong>10 mice</strong> in 3 minutes.</li>
-                    <li>Level 2 (The Attic): Catch <strong>15 mice</strong> in 2.5 minutes (faster mice!).</li>
-                    <li>Level 3 (The Basement): Catch <strong>20 mice</strong> in 2 minutes (intense swarm!).</li>
+                    <li>Level 1 (Living Room): Catch <strong>10 mice</strong> in 3 minutes (+50 bonus kibbles).</li>
+                    <li>Level 2 (The Attic): Catch <strong>15 mice</strong> in 2.5 minutes (faster mice! +100 bonus kibbles).</li>
+                    <li>Level 3 (The Basement): Catch <strong>20 mice</strong> in 2 minutes (intense swarm! +200 bonus kibbles).</li>
+                    <li>Each mouse caught awards <strong>10 kibbles</strong>.</li>
                     <li>Press <strong>SPACEBAR</strong> when near a mouse to pounce and catch it!</li>
                 </ul>
             </div>
@@ -130,11 +131,14 @@
             <p class="screen-subtitle" id="level-complete-msg">Living Room is clean! But mice are scurrying in the attic...</p>
             
             <div class="mission-box" style="text-align: center;">
-                <div style="font-size: 18px; margin-bottom: 8px;">
+                <div style="font-size: 18px; margin-bottom: 6px;">
                     Mice Caught: <b id="lvl-clear-caught" style="color: #2ed573;">10 / 10</b>
                 </div>
+                <div id="lvl-clear-bonus-row" style="font-size: 16px; color: #ff9f43; margin-bottom: 6px;">
+                    Level Bonus: <b id="lvl-clear-bonus" style="color: #ffd32a;">+50 Kibbles</b> 🥫
+                </div>
                 <div style="font-size: 22px; color: #ffd32a; font-weight: 900; margin-top: 6px;">
-                    Total Score: <span id="lvl-clear-score">1500</span>
+                    Total Kibbles: <span id="lvl-clear-score">150</span>
                 </div>
             </div>
 
@@ -156,7 +160,7 @@
                     Mice Caught: <b id="final-caught" style="color: #ff4757;">8 / 15</b>
                 </div>
                 <div style="font-size: 22px; color: #ffd32a; font-weight: 900; margin-top: 6px;">
-                    Score: <span id="final-score">1200</span>
+                    Total Kibbles: <span id="final-score">1200</span>
                 </div>
             </div>
 

@@ -1,4 +1,7 @@
 class VincenzoGame {
+    get score() { return this.kibbles; }
+    set score(val) { this.kibbles = val; }
+
     constructor() {
         this.container = document.getElementById('canvas-container');
         this.hud = {
@@ -23,15 +26,16 @@ class VincenzoGame {
 
         // Default level configs (fallback if fetch fails or before fetch resolves)
         this.levelConfigs = {
-            1: { id: 1, name: 'Living Room', target: 10, duration: 180, time: 180, miceCount: 3, speedMult: 1.0, clearIcon: '🎉 🛋️', clearTitle: 'Level 1 Cleared!', clearMsg: 'Living Room is clear! But mice are scurrying upstairs in the dusty Attic!', nextBtnText: 'Enter Level 2: The Attic (15 Mice)' },
-            2: { id: 2, name: 'The Attic', target: 15, duration: 150, time: 150, miceCount: 5, speedMult: 1.2, clearIcon: '📦 🌟', clearTitle: 'Level 2 Cleared!', clearMsg: 'The Attic is safe! But a massive infestation is swarming in the dark Basement!', nextBtnText: 'Enter Level 3: The Basement (20 Mice)' },
-            3: { id: 3, name: 'The Basement', target: 20, duration: 120, time: 120, miceCount: 6, speedMult: 1.35, clearIcon: '👑 🏆 🐱', clearTitle: 'GRAND CHAMPION VINCENZO!', clearMsg: 'All 3 levels conquered! 45 total mice caught! Vincenzo is the ultimate legendary mouse killer!', nextBtnText: 'Play Again from Level 1' }
+            1: { id: 1, name: 'Living Room', target: 10, duration: 180, time: 180, miceCount: 3, speedMult: 1.0, kibblesPerMouse: 10, completionKibbles: 50, clearIcon: '🎉 🛋️', clearTitle: 'Level 1 Cleared!', clearMsg: 'Living Room is clear! But mice are scurrying upstairs in the dusty Attic!', nextBtnText: 'Enter Level 2: The Attic (15 Mice)' },
+            2: { id: 2, name: 'The Attic', target: 15, duration: 150, time: 150, miceCount: 5, speedMult: 1.2, kibblesPerMouse: 10, completionKibbles: 100, clearIcon: '📦 🌟', clearTitle: 'Level 2 Cleared!', clearMsg: 'The Attic is safe! But a massive infestation is swarming in the dark Basement!', nextBtnText: 'Enter Level 3: The Basement (20 Mice)' },
+            3: { id: 3, name: 'The Basement', target: 20, duration: 120, time: 120, miceCount: 6, speedMult: 1.35, kibblesPerMouse: 10, completionKibbles: 200, clearIcon: '👑 🏆 🐱', clearTitle: 'GRAND CHAMPION VINCENZO!', clearMsg: 'All 3 levels conquered! 45 total mice caught! Vincenzo is the ultimate legendary mouse killer!', nextBtnText: 'Play Again from Level 1' }
         };
 
         this.currentLevel = 1;
         this.isRunning = false;
         this.isPaused = false;
-        this.score = 0;
+        this.kibbles = 0;
+        this.levelStartKibbles = 0;
         this.miceCaught = 0;
         this.timeLeft = 180;
         this.combo = 0;
@@ -243,8 +247,11 @@ class VincenzoGame {
                 const cfg = this.levelConfigs[lvlKey];
                 const durText = this.formatDurationText(cfg.duration || cfg.time || 60);
                 const extra = cfg.speedMult > 1.25 ? ' (intense swarm!)' : (cfg.speedMult > 1.0 ? ' (faster mice!)' : '');
-                html += `<li>Level ${lvlKey} (${cfg.name}): Catch <strong>${cfg.target} mice</strong> in ${durText}${extra}.</li>`;
+                const bonus = cfg.completionKibbles !== undefined ? cfg.completionKibbles : (cfg.bonusKibbles || 0);
+                const bonusStr = bonus > 0 ? ` (+${bonus} bonus kibbles)` : '';
+                html += `<li>Level ${lvlKey} (${cfg.name}): Catch <strong>${cfg.target} mice</strong> in ${durText}${extra}${bonusStr}.</li>`;
             });
+            html += '<li>Each mouse caught awards <strong>10 kibbles</strong>.</li>';
             html += '<li>Press <strong>SPACEBAR</strong> when near a mouse to pounce and catch it!</li></ul>';
             missionBox.innerHTML = html;
         }
@@ -278,7 +285,8 @@ class VincenzoGame {
                 this.startLevel(this.currentLevel + 1);
             } else {
                 // Completed game! Loop back to 1
-                this.score = 0;
+                this.kibbles = 0;
+                this.levelStartKibbles = 0;
                 this.startLevel(1);
             }
         });
@@ -288,7 +296,8 @@ class VincenzoGame {
         });
 
         document.getElementById('restart-all-btn').addEventListener('click', () => {
-            this.score = 0;
+            this.kibbles = 0;
+            this.levelStartKibbles = 0;
             this.startLevel(1);
         });
 
@@ -323,6 +332,14 @@ class VincenzoGame {
         this.currentLevel = lvl;
         const cfg = this.levelConfigs[lvl] || this.levelConfigs[String(lvl)];
         if (!cfg) return;
+
+        // Restore kibbles baseline for this level
+        if (lvl === 1) {
+            this.kibbles = 0;
+            this.levelStartKibbles = 0;
+        } else {
+            this.kibbles = this.levelStartKibbles;
+        }
 
         // Build Room Environment for this level
         this.room.buildLevel(lvl);
@@ -399,23 +416,23 @@ class VincenzoGame {
             mouse.state = 'CAUGHT';
             this.miceCaught++;
 
+            const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
+            const kibblesEarned = cfg.kibblesPerMouse !== undefined ? cfg.kibblesPerMouse : 10;
+            this.kibbles += kibblesEarned;
+
             this.combo++;
             this.comboTimer = 3.5;
             const multiplier = Math.min(this.combo, 4);
-            const pts = 100 * multiplier;
-            this.score += pts;
 
             sound.playCatchSuccess();
             sound.playMeow();
             this.particles.spawnCatchBurst(mouse.position);
-            this.showCatchFeedback(pts, multiplier);
+            this.showCatchFeedback(kibblesEarned, multiplier);
 
             mouse.destroy();
             this.mice.splice(targetIndex, 1);
 
             this.updateHUD();
-
-            const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
 
             // Check Win
             if (this.miceCaught >= cfg.target) {
@@ -433,10 +450,10 @@ class VincenzoGame {
         }
     }
 
-    showCatchFeedback(pts, multiplier) {
+    showCatchFeedback(kibbles, multiplier) {
         const phrases = ["SQUEAKLESS! 🐾", "PURRFECT CATCH! 🌟", "MEOW MAGNIFICO! 😼", "APEX PREDATOR! 💥"];
         const phrase = phrases[Math.floor(Math.random() * phrases.length)];
-        this.showToast(`+${pts} PTS! ${phrase}`);
+        this.showToast(`+${kibbles} KIBBLES! ${phrase}`);
 
         if (multiplier > 1) {
             this.hud.comboPopup.textContent = `COMBO x${multiplier}! 🔥`;
@@ -462,13 +479,23 @@ class VincenzoGame {
         const sortedKeys = Object.keys(this.levelConfigs).map(k => parseInt(k, 10)).sort((a, b) => a - b);
         const maxLevel = sortedKeys.length > 0 ? sortedKeys[sortedKeys.length - 1] : 3;
 
+        // Award completion bonus kibbles defined in levels.json
+        const bonusKibbles = cfg.completionKibbles !== undefined ? cfg.completionKibbles : (cfg.bonusKibbles !== undefined ? cfg.bonusKibbles : 50);
+        this.kibbles += bonusKibbles;
+        this.levelStartKibbles = this.kibbles;
+
         const icon = document.getElementById('level-complete-icon');
         const title = document.getElementById('level-complete-title');
         const msg = document.getElementById('level-complete-msg');
         const nextBtnText = document.getElementById('next-level-btn-text');
 
         document.getElementById('lvl-clear-caught').textContent = `${this.miceCaught} / ${cfg.target}`;
-        document.getElementById('lvl-clear-score').textContent = this.score;
+        const bonusEl = document.getElementById('lvl-clear-bonus');
+        if (bonusEl) {
+            bonusEl.textContent = `+${bonusKibbles} Kibbles`;
+        }
+        document.getElementById('lvl-clear-score').textContent = this.kibbles;
+        this.updateHUD();
 
         if (cfg.clearIcon) icon.textContent = cfg.clearIcon;
         if (cfg.clearTitle) title.textContent = cfg.clearTitle;
@@ -492,7 +519,7 @@ class VincenzoGame {
         document.getElementById('game-over-title').textContent = "Time's Up!";
         document.getElementById('game-over-msg').textContent = `You caught ${this.miceCaught} out of ${cfg.target} mice in ${cfg.name}.`;
         document.getElementById('final-caught').textContent = `${this.miceCaught} / ${cfg.target}`;
-        document.getElementById('final-score').textContent = this.score;
+        document.getElementById('final-score').textContent = this.kibbles;
 
         this.screens.gameOver.style.display = 'flex';
     }
@@ -500,7 +527,7 @@ class VincenzoGame {
     updateHUD() {
         const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
         if (!cfg) return;
-        this.hud.score.textContent = this.score;
+        this.hud.score.textContent = this.kibbles;
         this.hud.caught.textContent = `${this.miceCaught} / ${cfg.target}`;
         this.hud.mice.textContent = this.mice.length;
         this.hud.timer.textContent = this.formatTime(this.timeLeft);
