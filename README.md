@@ -13,12 +13,8 @@ You can play the game directly in your browser on GitHub Pages:
 
 ## 🎮 How to Play Locally
 
-Open `index.html` directly in your browser:
+Run a static HTTP server (recommended so `levels.json` loads seamlessly):
 ```bash
-# Direct open
-xdg-open index.html
-
-# Or via Python local server
 python3 -m http.server 8000
 # Visit http://localhost:8000 in your browser
 ```
@@ -33,8 +29,9 @@ python3 -m http.server 8000
 - **Touch**: Virtual joystick & on-screen buttons on mobile/tablet
 
 ## 🏆 Levels
-- **Level 1: The Living Room**: Catch 10 mice in 60s (3 concurrent mice)
-- **Level 2: The Attic**: Catch 15 mice in 60s (5 faster concurrent mice)
-- **Level 3: The Basement**: Catch 20 mice in 60s (6 agile swarm mice)
+Level settings are configured in [`levels.json`](file:///home/marcello/mdb/Code/vincenzo-the-mice-killer/levels.json):
+- **Level 1: The Living Room**: Catch 10 mice in 3 minutes (3 concurrent mice)
+- **Level 2: The Attic**: Catch 15 mice in 2.5 minutes (5 faster concurrent mice)
+- **Level 3: The Basement**: Catch 20 mice in 2 minutes (6 agile swarm mice)
 
 See `PROJECT_CONTEXT.md` for detailed technical and design documentation.
