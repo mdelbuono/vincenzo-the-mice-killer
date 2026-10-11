@@ -2,7 +2,16 @@
 
 A 3D browser action game built with **Three.js**. Hunt pesky mice across 3 levels of a house as **Vincenzo**, a white cat with two red spots!
 
-## 🎮 How to Play
+## 📖 Background
+
+This is a game that I built with my 11-year-old child for fun!
+
+## 🌐 Play Online
+
+You can play the game directly in your browser on GitHub Pages:
+**[Play Vincenzo The Mice Killer](https://mdelbuono.github.io/vincenzo-the-mice-killer/)**
+
+## 🎮 How to Play Locally
 
 Open `index.html` directly in your browser:
 ```bash
