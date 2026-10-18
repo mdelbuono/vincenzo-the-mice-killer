@@ -1,6 +1,24 @@
+import * as THREE from 'three';
+import { sound } from './sound.js';
+import { ParticleManager } from './particles.js';
+import { LevelEnvironment } from './environment.js';
+import { Cat } from './cat.js';
+import { Mouse } from './mouse.js';
+import { Shop, colorToCss } from './shop.js';
+import { AbilityManager } from './abilities.js';
+import { AccountStore, AccountPicker } from './accounts.js';
+
+// Golden mouse defaults (levels.json can override per level)
+const DEFAULT_GOLDEN_CHANCE = 0.12;  // chance that a newly spawned mouse is golden
+const DEFAULT_GOLDEN_REWARD = 50;    // brokjes for catching one
+
 class VincenzoGame {
-    get score() { return this.kibbles; }
-    set score(val) { this.kibbles = val; }
+    get score() { return this.brokjes; }
+    set score(val) { this.brokjes = val; }
+
+    // Brokjes live in the shop's saved wallet so they survive reloads
+    get brokjes() { return this.shop.wallet; }
+    set brokjes(val) { this.shop.wallet = val; }
 
     constructor() {
         this.container = document.getElementById('canvas-container');
@@ -26,16 +44,15 @@ class VincenzoGame {
 
         // Default level configs (fallback if fetch fails or before fetch resolves)
         this.levelConfigs = {
-            1: { id: 1, name: 'Living Room', target: 10, duration: 180, time: 180, miceCount: 3, speedMult: 1.0, kibblesPerMouse: 10, completionKibbles: 50, clearIcon: '🎉 🛋️', clearTitle: 'Level 1 Cleared!', clearMsg: 'Living Room is clear! But mice are scurrying upstairs in the dusty Attic!', nextBtnText: 'Enter Level 2: The Attic (15 Mice)' },
-            2: { id: 2, name: 'The Attic', target: 15, duration: 150, time: 150, miceCount: 5, speedMult: 1.2, kibblesPerMouse: 10, completionKibbles: 100, clearIcon: '📦 🌟', clearTitle: 'Level 2 Cleared!', clearMsg: 'The Attic is safe! But a massive infestation is swarming in the dark Basement!', nextBtnText: 'Enter Level 3: The Basement (20 Mice)' },
-            3: { id: 3, name: 'The Basement', target: 20, duration: 120, time: 120, miceCount: 6, speedMult: 1.35, kibblesPerMouse: 10, completionKibbles: 200, clearIcon: '👑 🏆 🐱', clearTitle: 'GRAND CHAMPION VINCENZO!', clearMsg: 'All 3 levels conquered! 45 total mice caught! Vincenzo is the ultimate legendary mouse killer!', nextBtnText: 'Play Again from Level 1' }
+            1: { id: 1, name: 'Living Room', target: 10, duration: 180, time: 180, miceCount: 3, speedMult: 1.0, brokjesPerMouse: 10, completionBrokjes: 50, goldenMouseChance: 0.12, goldenMouseBrokjes: 50, clearIcon: '🎉 🛋️', clearTitle: 'Level 1 Cleared!', clearMsg: 'Living Room is clear! But mice are scurrying upstairs in the dusty Attic!', nextBtnText: 'Enter Level 2: The Attic (15 Mice)' },
+            2: { id: 2, name: 'The Attic', target: 15, duration: 150, time: 150, miceCount: 5, speedMult: 1.2, brokjesPerMouse: 10, completionBrokjes: 100, goldenMouseChance: 0.12, goldenMouseBrokjes: 60, clearIcon: '📦 🌟', clearTitle: 'Level 2 Cleared!', clearMsg: 'The Attic is safe! But a massive infestation is swarming in the dark Basement!', nextBtnText: 'Enter Level 3: The Basement (20 Mice)' },
+            3: { id: 3, name: 'The Basement', target: 20, duration: 120, time: 120, miceCount: 6, speedMult: 1.35, brokjesPerMouse: 10, completionBrokjes: 200, goldenMouseChance: 0.15, goldenMouseBrokjes: 80, clearIcon: '🔥 🛢️', clearTitle: 'Level 3 Cleared!', clearMsg: 'The Basement is quiet! But a hungry gang of mice has raided the Kitchen and is going after the cheese!', nextBtnText: 'Enter Level 4: The Kitchen (25 Mice)' },
+            4: { id: 4, name: 'The Kitchen', target: 25, duration: 120, time: 120, miceCount: 8, speedMult: 1.5, brokjesPerMouse: 10, completionBrokjes: 300, goldenMouseChance: 0.18, goldenMouseBrokjes: 100, clearIcon: '👑 🏆 🐱', clearTitle: 'GRAND CHAMPION VINCENZO!', clearMsg: 'All 4 levels conquered! 70 total mice caught! Vincenzo is the ultimate legendary mouse killer!', nextBtnText: 'Play Again from Level 1' }
         };
 
         this.currentLevel = 1;
         this.isRunning = false;
         this.isPaused = false;
-        this.kibbles = 0;
-        this.levelStartKibbles = 0;
         this.miceCaught = 0;
         this.timeLeft = 180;
         this.combo = 0;
@@ -44,11 +61,25 @@ class VincenzoGame {
         this.mice = [];
         this.cameraMode = 0;
 
+        this.accounts = new AccountStore();
+        this.shop = new Shop({
+            onWalletChange: () => this.updateWalletDisplay(),
+            onAppearanceChange: () => this.applyCatAppearance(),
+            onInventoryChange: () => this.abilities.refreshBar(),
+            onOpen: () => this.onShopOpen(),
+            onClose: () => this.onShopClose()
+        }, this.accounts);
+        this.accountPicker = new AccountPicker(this.accounts, () => this.onAccountSwitch());
+
         this.initThree();
         this.initWorld();
+        this.abilities = new AbilityManager(this);
         this.initInputs();
         this.setupUI();
         this.loadLevelConfigs();
+        this.shop.loadCatalog();
+        this.updateWalletDisplay();
+        this.renderAccounts();
 
         this.lastTime = performance.now();
         requestAnimationFrame((t) => this.loop(t));
@@ -78,9 +109,10 @@ class VincenzoGame {
 
     initWorld() {
         this.room = new LevelEnvironment(this.scene);
-        this.room.buildLevel(1);
+        // Initial build without a config — environment will load once levelConfigs are fetched
+        this.room.buildLevel(1, null);
 
-        this.vincenzo = new Cat(this.scene);
+        this.vincenzo = new Cat(this.scene, this.shop.getAppearance());
         this.particles = new ParticleManager(this.scene);
         this.radarCanvas = document.getElementById('radar-canvas');
         this.radarCtx = this.radarCanvas.getContext('2d');
@@ -96,7 +128,21 @@ class VincenzoGame {
         };
 
         window.addEventListener('keydown', (e) => {
+            // Typing a player name must not move the cat or toggle sound
+            if (e.target.closest && e.target.closest('input, textarea')) return;
+
             const k = e.key.toLowerCase();
+
+            // While the shop is open, only Escape works (closes the shop)
+            if (this.shop.isOpen) {
+                if (k === 'escape') this.shop.close();
+                return;
+            }
+
+            // Shop boosts & weapons (digits via e.code so Shift+1 still works)
+            const abilityKey = e.code && e.code.startsWith('Digit') ? e.code.slice(5) : k;
+            if (this.abilities.handleKey(abilityKey)) return;
+
             if (k === 'w' || k === 'arrowup') this.input.forward = true;
             if (k === 's' || k === 'arrowdown') this.input.backward = true;
             if (k === 'a' || k === 'arrowleft') this.input.turnLeft = true;
@@ -124,7 +170,7 @@ class VincenzoGame {
         });
 
         window.addEventListener('pointerdown', (e) => {
-            if (e.target.closest('#hud') || e.target.closest('.overlay-screen')) return;
+            if (e.target.closest('#hud') || e.target.closest('.overlay-screen') || e.target.closest('#shop-btn')) return;
             this.attemptCatch();
         });
 
@@ -247,12 +293,13 @@ class VincenzoGame {
                 const cfg = this.levelConfigs[lvlKey];
                 const durText = this.formatDurationText(cfg.duration || cfg.time || 60);
                 const extra = cfg.speedMult > 1.25 ? ' (intense swarm!)' : (cfg.speedMult > 1.0 ? ' (faster mice!)' : '');
-                const bonus = cfg.completionKibbles !== undefined ? cfg.completionKibbles : (cfg.bonusKibbles || 0);
-                const bonusStr = bonus > 0 ? ` (+${bonus} bonus kibbles)` : '';
+                const bonus = cfg.completionBrokjes !== undefined ? cfg.completionBrokjes : (cfg.bonusBrokjes || 0);
+                const bonusStr = bonus > 0 ? ` (+${bonus} bonus brokjes)` : '';
                 html += `<li>Level ${lvlKey} (${cfg.name}): Catch <strong>${cfg.target} mice</strong> in ${durText}${extra}${bonusStr}.</li>`;
             });
-            html += '<li>Each mouse caught awards <strong>10 kibbles</strong>.</li>';
-            html += '<li>Press <strong>SPACEBAR</strong> when near a mouse to pounce and catch it!</li></ul>';
+            html += '<li>Each mouse caught awards <strong>10 brokjes</strong>. A rare ✨ <strong>golden mouse</strong> is faster but worth much more!</li>';
+            html += '<li>Press <strong>SPACEBAR</strong> when near a mouse to pounce and catch it!</li>';
+            html += '<li>Spend your brokjes in the <strong>🛒 Shop</strong> (top-left): new cats, boosts, sneezes, a blaster and clothes!</li></ul>';
             missionBox.innerHTML = html;
         }
 
@@ -284,9 +331,7 @@ class VincenzoGame {
             if (this.currentLevel < maxLevel) {
                 this.startLevel(this.currentLevel + 1);
             } else {
-                // Completed game! Loop back to 1
-                this.kibbles = 0;
-                this.levelStartKibbles = 0;
+                // Completed game! Loop back to 1 (brokjes stay in the wallet)
                 this.startLevel(1);
             }
         });
@@ -296,8 +341,6 @@ class VincenzoGame {
         });
 
         document.getElementById('restart-all-btn').addEventListener('click', () => {
-            this.kibbles = 0;
-            this.levelStartKibbles = 0;
             this.startLevel(1);
         });
 
@@ -305,9 +348,67 @@ class VincenzoGame {
             this.togglePause();
         });
 
+        document.querySelectorAll('[data-main-menu]').forEach(btn => {
+            btn.addEventListener('click', () => this.goToMainMenu());
+        });
+
         document.getElementById('btn-camera').addEventListener('click', () => this.cycleCamera());
         document.getElementById('btn-sound').addEventListener('click', () => this.toggleSound());
         document.getElementById('btn-pause').addEventListener('click', () => this.togglePause());
+        document.getElementById('shop-btn').addEventListener('click', (e) => {
+            sound.init();
+            this.shop.open();
+            e.currentTarget.blur();
+        });
+    }
+
+    // Back to the start screen (to pick another level or player)
+    goToMainMenu() {
+        this.isRunning = false;
+        this.isPaused = false;
+        this.abilities.reset();
+        this.hud.catchHint.classList.remove('active');
+        this.screens.levelComplete.style.display = 'none';
+        this.screens.gameOver.style.display = 'none';
+        this.screens.pause.style.display = 'none';
+        this.screens.start.style.display = 'flex';
+        this.updateStartScreenFromConfig();
+        this.renderAccounts();
+    }
+
+    renderAccounts() {
+        this.accountPicker.render(account => Shop.normalizeSave(account.data).brokjes);
+    }
+
+    onAccountSwitch() {
+        this.shop.reloadAccount();
+        this.renderAccounts();
+    }
+
+    // Opening the shop mid-hunt pauses the game; closing it resumes (unless paused before)
+    onShopOpen() {
+        this.pausedBeforeShop = this.isPaused;
+        if (this.isRunning) this.isPaused = true;
+    }
+
+    onShopClose() {
+        if (this.isRunning && !this.pausedBeforeShop) this.isPaused = false;
+    }
+
+    updateWalletDisplay() {
+        document.getElementById('shop-btn-wallet').textContent = this.brokjes;
+        this.hud.score.textContent = this.brokjes;
+        const player = this.accounts.current;
+        document.getElementById('hud-player-name').textContent = `${player.avatar} ${player.name}`;
+    }
+
+    // Rebuilds the cat after choosing another cat or changing clothes in the shop
+    applyCatAppearance() {
+        const look = this.shop.getAppearance();
+        this.vincenzo.setAppearance(look);
+        document.getElementById('hud-cat-name').textContent = look.name;
+        document.querySelector('.cat-avatar').style.background =
+            `linear-gradient(135deg, ${colorToCss(look.fur)} 65%, ${colorToCss(look.spots)} 100%)`;
     }
 
     cycleCamera() {
@@ -328,26 +429,19 @@ class VincenzoGame {
         this.screens.pause.style.display = this.isPaused ? 'flex' : 'none';
     }
 
-    startLevel(lvl) {
+    async startLevel(lvl) {
         this.currentLevel = lvl;
         const cfg = this.levelConfigs[lvl] || this.levelConfigs[String(lvl)];
         if (!cfg) return;
 
-        // Restore kibbles baseline for this level
-        if (lvl === 1) {
-            this.kibbles = 0;
-            this.levelStartKibbles = 0;
-        } else {
-            this.kibbles = this.levelStartKibbles;
-        }
-
-        // Build Room Environment for this level
-        this.room.buildLevel(lvl);
+        // Build Room Environment for this level (async — loads external env JSON)
+        await this.room.buildLevel(lvl, cfg);
 
         this.miceCaught = 0;
         this.timeLeft = cfg.duration || cfg.time || 180;
         this.combo = 0;
         this.comboTimer = 0;
+        this.abilities.reset();
 
         // Reset Vincenzo
         this.vincenzo.position.set(0, 0, 2);
@@ -385,9 +479,18 @@ class VincenzoGame {
     spawnMouse(speedMultiplier = 1.0) {
         const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
         if (this.mice.length >= cfg.miceCount) return;
-        const mouse = new Mouse(this.scene, this.room, speedMultiplier || cfg.speedMult);
+
+        // Now and then a golden mouse appears (never more than one at a time)
+        const goldenChance = cfg.goldenMouseChance !== undefined ? cfg.goldenMouseChance : DEFAULT_GOLDEN_CHANCE;
+        const golden = !this.mice.some(m => m.golden) && Math.random() < goldenChance;
+
+        const mouse = new Mouse(this.scene, this.room, speedMultiplier || cfg.speedMult, golden);
         this.mice.push(mouse);
         sound.playMouseSqueak();
+        if (golden) {
+            sound.playGoldenAppear();
+            this.showToast('✨ A GOLDEN MOUSE APPEARED! ✨');
+        }
     }
 
     // Dedicated Catch Action (SPACEBAR / touch click)
@@ -412,48 +515,72 @@ class VincenzoGame {
         }
 
         if (targetIndex !== -1) {
-            const mouse = this.mice[targetIndex];
-            mouse.state = 'CAUGHT';
-            this.miceCaught++;
-
-            const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
-            const kibblesEarned = cfg.kibblesPerMouse !== undefined ? cfg.kibblesPerMouse : 10;
-            this.kibbles += kibblesEarned;
-
-            this.combo++;
-            this.comboTimer = 3.5;
-            const multiplier = Math.min(this.combo, 4);
-
-            sound.playCatchSuccess();
-            sound.playMeow();
-            this.particles.spawnCatchBurst(mouse.position);
-            this.showCatchFeedback(kibblesEarned, multiplier);
-
-            mouse.destroy();
-            this.mice.splice(targetIndex, 1);
-
-            this.updateHUD();
-
-            // Check Win
-            if (this.miceCaught >= cfg.target) {
-                this.completeLevel();
-                return;
-            }
-
-            // Spawn replacement mouse
-            setTimeout(() => {
-                if (this.isRunning) this.spawnMouse(cfg.speedMult);
-            }, 800);
-
+            this.catchMouse(this.mice[targetIndex]);
         } else {
             sound.playPounce();
         }
     }
 
-    showCatchFeedback(kibbles, multiplier) {
+    /**
+     * Removes a mouse as caught (pounce, sneeze, or blaster) and awards brokjes.
+     * @param {Mouse} mouse
+     * @param {object} [opts] - { silent: true } skips the per-mouse sound and toast
+     * @returns {number} brokjes earned
+     */
+    catchMouse(mouse, opts = {}) {
+        const index = this.mice.indexOf(mouse);
+        if (index === -1 || !this.isRunning) return 0;
+
+        mouse.state = 'CAUGHT';
+        this.miceCaught++;
+
+        const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
+        const boostMult = this.abilities.brokjesMultiplier();
+        const baseBrokjes = mouse.golden
+            ? (cfg.goldenMouseBrokjes !== undefined ? cfg.goldenMouseBrokjes : DEFAULT_GOLDEN_REWARD)
+            : (cfg.brokjesPerMouse !== undefined ? cfg.brokjesPerMouse : 10);
+        const brokjesEarned = baseBrokjes * boostMult;
+        this.brokjes += brokjesEarned;
+
+        this.combo++;
+        this.comboTimer = 3.5;
+        const multiplier = Math.min(this.combo, 4);
+
+        this.particles.spawnCatchBurst(mouse.position);
+        if (mouse.golden) {
+            this.particles.spawnCatchBurst(mouse.position, [0xffd32a, 0xf1c40f, 0xffffff]);
+            sound.playGoldenAppear();
+        }
+        if (!opts.silent) {
+            sound.playCatchSuccess();
+            sound.playMeow();
+            this.showCatchFeedback(brokjesEarned, multiplier, boostMult, mouse.golden);
+        }
+
+        mouse.destroy();
+        this.mice.splice(index, 1);
+
+        this.updateHUD();
+
+        // Check Win
+        if (this.miceCaught >= cfg.target) {
+            this.completeLevel();
+            return brokjesEarned;
+        }
+
+        // Spawn replacement mouse
+        setTimeout(() => {
+            if (this.isRunning) this.spawnMouse(cfg.speedMult);
+        }, 800);
+
+        return brokjesEarned;
+    }
+
+    showCatchFeedback(brokjes, multiplier, boostMult = 1, golden = false) {
         const phrases = ["SQUEAKLESS! 🐾", "PURRFECT CATCH! 🌟", "MEOW MAGNIFICO! 😼", "APEX PREDATOR! 💥"];
-        const phrase = phrases[Math.floor(Math.random() * phrases.length)];
-        this.showToast(`+${kibbles} KIBBLES! ${phrase}`);
+        const phrase = golden ? 'GOLDEN MOUSE! 🏆' : phrases[Math.floor(Math.random() * phrases.length)];
+        const boostStr = boostMult > 1 ? ` (x${boostMult})` : '';
+        this.showToast(`+${brokjes} BROKJES${boostStr}! ${phrase}`);
 
         if (multiplier > 1) {
             this.hud.comboPopup.textContent = `COMBO x${multiplier}! 🔥`;
@@ -473,16 +600,16 @@ class VincenzoGame {
 
     completeLevel() {
         this.isRunning = false;
+        this.abilities.reset();
         sound.playCatchSuccess();
 
         const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
         const sortedKeys = Object.keys(this.levelConfigs).map(k => parseInt(k, 10)).sort((a, b) => a - b);
         const maxLevel = sortedKeys.length > 0 ? sortedKeys[sortedKeys.length - 1] : 3;
 
-        // Award completion bonus kibbles defined in levels.json
-        const bonusKibbles = cfg.completionKibbles !== undefined ? cfg.completionKibbles : (cfg.bonusKibbles !== undefined ? cfg.bonusKibbles : 50);
-        this.kibbles += bonusKibbles;
-        this.levelStartKibbles = this.kibbles;
+        // Award completion bonus brokjes defined in levels.json
+        const bonusBrokjes = cfg.completionBrokjes !== undefined ? cfg.completionBrokjes : (cfg.bonusBrokjes !== undefined ? cfg.bonusBrokjes : 50);
+        this.brokjes += bonusBrokjes;
 
         const icon = document.getElementById('level-complete-icon');
         const title = document.getElementById('level-complete-title');
@@ -492,9 +619,9 @@ class VincenzoGame {
         document.getElementById('lvl-clear-caught').textContent = `${this.miceCaught} / ${cfg.target}`;
         const bonusEl = document.getElementById('lvl-clear-bonus');
         if (bonusEl) {
-            bonusEl.textContent = `+${bonusKibbles} Kibbles`;
+            bonusEl.textContent = `+${bonusBrokjes} Brokjes`;
         }
-        document.getElementById('lvl-clear-score').textContent = this.kibbles;
+        document.getElementById('lvl-clear-score').textContent = this.brokjes;
         this.updateHUD();
 
         if (cfg.clearIcon) icon.textContent = cfg.clearIcon;
@@ -513,13 +640,14 @@ class VincenzoGame {
 
     timeUp() {
         this.isRunning = false;
+        this.abilities.reset();
         sound.playMeow();
 
         const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
         document.getElementById('game-over-title').textContent = "Time's Up!";
         document.getElementById('game-over-msg').textContent = `You caught ${this.miceCaught} out of ${cfg.target} mice in ${cfg.name}.`;
         document.getElementById('final-caught').textContent = `${this.miceCaught} / ${cfg.target}`;
-        document.getElementById('final-score').textContent = this.kibbles;
+        document.getElementById('final-score').textContent = this.brokjes;
 
         this.screens.gameOver.style.display = 'flex';
     }
@@ -527,7 +655,7 @@ class VincenzoGame {
     updateHUD() {
         const cfg = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
         if (!cfg) return;
-        this.hud.score.textContent = this.kibbles;
+        this.updateWalletDisplay();
         this.hud.caught.textContent = `${this.miceCaught} / ${cfg.target}`;
         this.hud.mice.textContent = this.mice.length;
         this.hud.timer.textContent = this.formatTime(this.timeLeft);
@@ -549,11 +677,11 @@ class VincenzoGame {
         ctx.fillStyle = 'rgba(25, 35, 50, 0.9)';
         ctx.fillRect(0, 0, w, h);
 
-        // Mice (Red dots)
-        ctx.fillStyle = '#ff4757';
+        // Mice (Red dots, golden mouse as a bigger gold dot)
         this.mice.forEach(m => {
+            ctx.fillStyle = m.golden ? '#ffd32a' : '#ff4757';
             ctx.beginPath();
-            ctx.arc(mapX(m.position.x), mapZ(m.position.z), 3.5, 0, Math.PI * 2);
+            ctx.arc(mapX(m.position.x), mapZ(m.position.z), m.golden ? 5 : 3.5, 0, Math.PI * 2);
             ctx.fill();
         });
 
@@ -562,7 +690,7 @@ class VincenzoGame {
         ctx.translate(mapX(this.vincenzo.position.x), mapZ(this.vincenzo.position.z));
         ctx.rotate(this.vincenzo.rotationY);
 
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = colorToCss(this.vincenzo.appearance.fur);
         ctx.beginPath();
         ctx.moveTo(0, -6);
         ctx.lineTo(-4, 4);
@@ -571,7 +699,7 @@ class VincenzoGame {
         ctx.fill();
 
         // Two red spots at the back
-        ctx.fillStyle = '#ee5253';
+        ctx.fillStyle = colorToCss(this.vincenzo.appearance.spots);
         ctx.beginPath();
         ctx.arc(-2, 2.5, 1.2, 0, Math.PI * 2);
         ctx.arc(2, 2.5, 1.2, 0, Math.PI * 2);
@@ -591,6 +719,9 @@ class VincenzoGame {
     updateCamera(dt) {
         const catPos = this.vincenzo.position;
         const catRot = this.vincenzo.rotationY;
+
+        // In first-person the cat's own head would block the view
+        this.vincenzo.mesh.visible = this.cameraMode !== 2;
 
         if (this.cameraMode === 0) {
             // 3rd Person Follow
@@ -648,6 +779,9 @@ class VincenzoGame {
                     this.hud.comboPopup.style.transform = 'translateX(-50%) scale(0)';
                 }
             }
+
+            // Boost timers & blaster pellets (may finish the level)
+            this.abilities.update(dt);
 
             // Update Vincenzo
             this.vincenzo.update(dt, this.input, this.room);

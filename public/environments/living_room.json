@@ -1,0 +1,33 @@
+{
+  "id": "living_room",
+  "name": "Living Room",
+  "lights": [
+    { "type": "ambient", "color": "0xfff5eb", "intensity": 0.6 },
+    {
+      "type": "directional",
+      "color": "0xfffaed",
+      "intensity": 0.95,
+      "position": [16, 12, 4],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 16
+    },
+    { "type": "point", "color": "0xffe8d6", "intensity": 0.6, "distance": 25, "position": [0, 7.5, 0] }
+  ],
+  "floor": { "texture": "parquet", "roughness": 0.4 },
+  "ceiling": { "color": "0xf5f6fa", "roughness": 0.9 },
+  "walls": { "color": "0xecf0f1", "roughness": 0.7 },
+  "extras": [
+    { "type": "rug", "position": [0, 0.02, 0], "size": [14, 10] }
+  ],
+  "props": [
+    { "builder": "sofa",        "x": 0,     "z": 4.5  },
+    { "builder": "coffeeTable", "x": 0,     "z": 0    },
+    { "builder": "tvConsole",   "x": 0,     "z": -11.2 },
+    { "builder": "bookshelf",   "x": -15,   "z": -4   },
+    { "builder": "catTree",     "x": 13.5,  "z": -7   },
+    { "builder": "armchair",    "x": -8.5,  "z": 5.5  },
+    { "builder": "housePlant",  "x": -15,   "z": 11   },
+    { "builder": "floorLamp",   "x": 14.5,  "z": 7    }
+  ]
+}

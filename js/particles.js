@@ -1,5 +1,7 @@
+import * as THREE from 'three';
+
 // --- Particle System for Dust & Catch Stars ---
-class ParticleManager {
+export class ParticleManager {
     constructor(scene) {
         this.scene = scene;
         this.particles = [];
@@ -25,8 +27,7 @@ class ParticleManager {
         this.particles.push(p);
     }
 
-    spawnCatchBurst(pos) {
-        const colors = [0xffd32a, 0xff4757, 0x2ed573, 0xffa502, 0xffffff];
+    spawnCatchBurst(pos, colors = [0xffd32a, 0xff4757, 0x2ed573, 0xffa502, 0xffffff]) {
         for (let i = 0; i < 20; i++) {
             const color = colors[Math.floor(Math.random() * colors.length)];
             const mat = new THREE.MeshBasicMaterial({ color: color });
@@ -48,6 +49,46 @@ class ParticleManager {
             };
             this.scene.add(star);
             this.particles.push(star);
+        }
+    }
+
+    // Expanding ring of pepper-sneeze cloud puffs
+    spawnSneezeCloud(pos, radius) {
+        const colors = [0xc8e6a0, 0xf6e58d, 0xdfe6e9];
+        for (let i = 0; i < 48; i++) {
+            const mat = new THREE.MeshBasicMaterial({
+                color: colors[i % colors.length],
+                transparent: true,
+                opacity: 0.75
+            });
+            const p = new THREE.Mesh(this.dustGeo, mat);
+            p.position.copy(pos);
+            p.position.y = 0.6;
+            const angle = (i / 48) * Math.PI * 2 + Math.random() * 0.2;
+            const speed = radius * (1.6 + Math.random() * 0.8);
+            p.userData = {
+                vel: new THREE.Vector3(Math.cos(angle) * speed, 4 + Math.random() * 2, Math.sin(angle) * speed),
+                life: 1.6,
+                decay: 2.2
+            };
+            this.scene.add(p);
+            this.particles.push(p);
+        }
+    }
+
+    // Small orange spark puff where a blaster pellet hits
+    spawnPelletHit(pos) {
+        for (let i = 0; i < 8; i++) {
+            const mat = new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffa502 : 0xffd32a });
+            const p = new THREE.Mesh(this.dustGeo, mat);
+            p.position.copy(pos);
+            p.userData = {
+                vel: new THREE.Vector3((Math.random() - 0.5) * 5, Math.random() * 3 + 1, (Math.random() - 0.5) * 5),
+                life: 0.8,
+                decay: 2.5
+            };
+            this.scene.add(p);
+            this.particles.push(p);
         }
     }
 

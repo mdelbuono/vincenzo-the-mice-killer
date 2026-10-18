@@ -1,5 +1,12 @@
+import * as THREE from 'three';
+import {
+    createParquetTexture, createAtticFloorTexture, createBasementFloorTexture,
+    createBasementWallTexture, createKitchenFloorTexture, createKitchenWallTexture,
+    createRugTexture, createTVCanvasTexture
+} from './textures.js';
+
 // --- Dynamic Multi-Level Room Environment Builder ---
-class LevelEnvironment {
+export class LevelEnvironment {
     constructor(scene) {
         this.scene = scene;
         this.roomGroup = new THREE.Group();
@@ -29,16 +36,261 @@ class LevelEnvironment {
         this.tvTexture = null;
     }
 
-    buildLevel(lvl) {
+    /**
+     * Builds the level by fetching the environment JSON file referenced in the
+     * level config. Falls back to the legacy hardcoded build methods if no
+     * environment file is specified or if the fetch fails.
+     *
+     * @param {number} lvl - Level number
+     * @param {object|null} cfg - Level config object from levels.json (may be null)
+     */
+    async buildLevel(lvl, cfg) {
         this.clearCurrentLevel();
         this.currentLevel = lvl;
 
-        if (lvl === 1) {
-            this.buildLivingRoom();
-        } else if (lvl === 2) {
-            this.buildAttic();
-        } else if (lvl === 3) {
-            this.buildBasement();
+        const environmentFile = cfg && cfg.environment ? cfg.environment : null;
+
+        if (environmentFile) {
+            try {
+                const response = await fetch(environmentFile);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const envData = await response.json();
+                this._buildFromData(envData);
+                return;
+            } catch (err) {
+                console.warn(`Could not load environment file "${environmentFile}", falling back to built-in builder:`, err);
+            }
+        }
+    }
+
+    /**
+     * Builds the environment from a parsed environment JSON data object.
+     * @param {object} envData
+     */
+    _buildFromData(envData) {
+        // --- Lights ---
+        if (envData.lights) {
+            for (const lightDef of envData.lights) {
+                const color = parseInt(lightDef.color, 16);
+                let light;
+                if (lightDef.type === 'ambient') {
+                    light = new THREE.AmbientLight(color, lightDef.intensity);
+                } else if (lightDef.type === 'directional') {
+                    light = new THREE.DirectionalLight(color, lightDef.intensity);
+                    if (lightDef.position) light.position.set(...lightDef.position);
+                    if (lightDef.castShadow) {
+                        light.castShadow = true;
+                        const mapSize = lightDef.shadowMapSize || 1024;
+                        light.shadow.mapSize.width = mapSize;
+                        light.shadow.mapSize.height = mapSize;
+                        if (lightDef.shadowCameraSize) {
+                            const d = lightDef.shadowCameraSize;
+                            light.shadow.camera.left = -d;
+                            light.shadow.camera.right = d;
+                            light.shadow.camera.top = d;
+                            light.shadow.camera.bottom = -d;
+                        }
+                    }
+                } else if (lightDef.type === 'point') {
+                    light = new THREE.PointLight(color, lightDef.intensity, lightDef.distance || 10);
+                    if (lightDef.position) light.position.set(...lightDef.position);
+                }
+                if (light) this.lightsGroup.add(light);
+            }
+        }
+
+        // --- Floor ---
+        if (envData.floor) {
+            const f = envData.floor;
+            let floorMat;
+            if (f.texture) {
+                floorMat = new THREE.MeshStandardMaterial({
+                    map: this._resolveTexture(f.texture),
+                    roughness: f.roughness !== undefined ? f.roughness : 0.5,
+                    metalness: f.metalness !== undefined ? f.metalness : 0
+                });
+            } else {
+                floorMat = new THREE.MeshStandardMaterial({
+                    color: parseInt(f.color, 16),
+                    roughness: f.roughness !== undefined ? f.roughness : 0.5
+                });
+            }
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(this.roomWidth, this.roomDepth), floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            this.roomGroup.add(floor);
+        }
+
+        // --- Ceiling ---
+        if (envData.ceiling) {
+            const c = envData.ceiling;
+            const ceilMat = new THREE.MeshStandardMaterial({
+                color: parseInt(c.color, 16),
+                roughness: c.roughness !== undefined ? c.roughness : 0.9
+            });
+            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(this.roomWidth, this.roomDepth), ceilMat);
+            ceiling.position.y = this.wallHeight;
+            ceiling.rotation.x = Math.PI / 2;
+            this.roomGroup.add(ceiling);
+        }
+
+        // --- Walls ---
+        if (envData.walls) {
+            const w = envData.walls;
+            let wallMat;
+            if (w.texture) {
+                wallMat = new THREE.MeshStandardMaterial({
+                    map: this._resolveTexture(w.texture),
+                    roughness: w.roughness !== undefined ? w.roughness : 0.7
+                });
+            } else {
+                wallMat = new THREE.MeshStandardMaterial({
+                    color: parseInt(w.color, 16),
+                    roughness: w.roughness !== undefined ? w.roughness : 0.7
+                });
+            }
+            this.createRoomWalls(wallMat);
+        }
+
+        // --- Extras (special built-in decorations) ---
+        if (envData.extras) {
+            for (const extra of envData.extras) {
+                this._buildExtra(extra);
+            }
+        }
+
+        // --- Props ---
+        if (envData.props) {
+            for (const prop of envData.props) {
+                this._buildProp(prop);
+            }
+        }
+    }
+
+    /**
+     * Resolves a texture name string to a Three.js texture by calling the
+     * corresponding procedural texture factory function.
+     * @param {string} textureName
+     * @returns {THREE.Texture|null}
+     */
+    _resolveTexture(textureName) {
+        switch (textureName) {
+            case 'parquet':         return createParquetTexture();
+            case 'rug':             return createRugTexture();
+            case 'atticFloor':      return createAtticFloorTexture();
+            case 'basementFloor':   return createBasementFloorTexture();
+            case 'basementWall':    return createBasementWallTexture();
+            case 'kitchenFloor':    return createKitchenFloorTexture();
+            case 'kitchenWall':     return createKitchenWallTexture();
+            default:
+                console.warn(`Unknown texture name: "${textureName}"`);
+                return null;
+        }
+    }
+
+    /**
+     * Builds a special/extra element defined by type in the extras array.
+     * @param {object} extra
+     */
+    _buildExtra(extra) {
+        switch (extra.type) {
+            case 'rug': {
+                const rugMat = new THREE.MeshStandardMaterial({ map: createRugTexture(), roughness: 0.85 });
+                const rug = new THREE.Mesh(new THREE.PlaneGeometry(...extra.size), rugMat);
+                rug.rotation.x = -Math.PI / 2;
+                rug.position.set(...extra.position);
+                rug.receiveShadow = true;
+                this.roomGroup.add(rug);
+                break;
+            }
+            case 'atticRafters': {
+                const beamMat = new THREE.MeshStandardMaterial({ color: 0x3d2f26, roughness: 0.8 });
+                for (let z = -11; z <= 11; z += 5.5) {
+                    const beamL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8.5, 0.5), beamMat);
+                    beamL.position.set(-7.5, 5.0, z);
+                    beamL.rotation.z = -0.45;
+                    beamL.castShadow = true;
+                    this.roomGroup.add(beamL);
+
+                    const beamR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8.5, 0.5), beamMat);
+                    beamR.position.set(7.5, 5.0, z);
+                    beamR.rotation.z = 0.45;
+                    beamR.castShadow = true;
+                    this.roomGroup.add(beamR);
+
+                    const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(16, 0.4, 0.5), beamMat);
+                    crossBeam.position.set(0, 6.8, z);
+                    this.roomGroup.add(crossBeam);
+                }
+                break;
+            }
+            case 'atticGableWindow': {
+                const winMat = new THREE.MeshBasicMaterial({ color: 0x48dbfb });
+                const winMesh = new THREE.Mesh(new THREE.CircleGeometry(2.2, 16), winMat);
+                winMesh.position.set(0, 5.2, -this.roomDepth / 2 + 0.1);
+                this.roomGroup.add(winMesh);
+                break;
+            }
+            case 'basementPipes': {
+                const pipeMat = new THREE.MeshStandardMaterial({ color: 0x7f8c8d, metalness: 0.8, roughness: 0.3 });
+                const pipe1 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, this.roomWidth), pipeMat);
+                pipe1.rotation.z = Math.PI / 2;
+                pipe1.position.set(0, 7.2, -6);
+                this.roomGroup.add(pipe1);
+
+                const pipe2 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, this.roomDepth), pipeMat);
+                pipe2.rotation.x = Math.PI / 2;
+                pipe2.position.set(8, 7.4, 0);
+                this.roomGroup.add(pipe2);
+                break;
+            }
+            default:
+                console.warn(`Unknown extra type: "${extra.type}"`);
+        }
+    }
+
+    /**
+     * Dispatches a prop definition from the JSON to the appropriate builder method.
+     * @param {object} prop
+     */
+    _buildProp(prop) {
+        const x = prop.x !== undefined ? prop.x : 0;
+        const z = prop.z !== undefined ? prop.z : 0;
+        const y = prop.y !== undefined ? prop.y : 0;
+
+        switch (prop.builder) {
+            case 'sofa':             this.buildSofa(x, z); break;
+            case 'coffeeTable':      this.buildCoffeeTable(x, z); break;
+            case 'tvConsole':        this.buildTVConsole(x, z); break;
+            case 'bookshelf':        this.buildBookshelf(x, z); break;
+            case 'catTree':          this.buildCatTree(x, z); break;
+            case 'armchair':         this.buildArmchair(x, z); break;
+            case 'housePlant':       this.buildHousePlant(x, z); break;
+            case 'floorLamp':        this.buildFloorLamp(x, z); break;
+            case 'cardboardBoxStack':this.buildCardboardBoxStack(x, z); break;
+            case 'vintageTrunk':     this.buildVintageTrunk(x, z, prop.rotY !== undefined ? prop.rotY : 0); break;
+            case 'rockingChair':     this.buildRockingChair(x, z); break;
+            case 'grandfatherClock': this.buildGrandfatherClock(x, z); break;
+            case 'stepLadder':       this.buildStepLadder(x, z); break;
+            case 'suitcaseStack':    this.buildSuitcaseStack(x, z); break;
+            case 'atticLantern':     this.buildAtticLantern(x, y, z); break;
+            case 'furnace':          this.buildFurnace(x, z); break;
+            case 'barrelStack':      this.buildBarrelStack(x, z); break;
+            case 'workbench':        this.buildWorkbench(x, z); break;
+            case 'washingMachine':   this.buildWashingMachine(x, z); break;
+            case 'palletWithCrates': this.buildPalletWithCrates(x, z); break;
+            case 'hangingBulb':      this.buildHangingBulb(x, y, z); break;
+            case 'kitchenCounter':   this.buildKitchenCounter(x, z); break;
+            case 'stove':            this.buildStove(x, z); break;
+            case 'fridge':           this.buildFridge(x, z); break;
+            case 'kitchenIsland':    this.buildKitchenIsland(x, z); break;
+            case 'diningTable':      this.buildDiningTable(x, z); break;
+            case 'pantryShelf':      this.buildPantryShelf(x, z); break;
+            case 'trashBin':         this.buildTrashBin(x, z); break;
+            case 'catBowls':         this.buildCatBowls(x, z); break;
+            case 'pendantLamp':      this.buildPendantLamp(x, y, z); break;
+            default:
+                console.warn(`Unknown prop builder: "${prop.builder}"`);
         }
     }
 
@@ -65,219 +317,6 @@ class LevelEnvironment {
             }
         }
         return false;
-    }
-
-    // ================= LEVEL 1: THE LIVING ROOM =================
-    buildLivingRoom() {
-        // Lighting
-        const ambient = new THREE.AmbientLight(0xfff5eb, 0.6);
-        this.lightsGroup.add(ambient);
-
-        const sunLight = new THREE.DirectionalLight(0xfffaed, 0.95);
-        sunLight.position.set(16, 12, 4);
-        sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        const d = 16;
-        sunLight.shadow.camera.left = -d;
-        sunLight.shadow.camera.right = d;
-        sunLight.shadow.camera.top = d;
-        sunLight.shadow.camera.bottom = -d;
-        this.lightsGroup.add(sunLight);
-
-        const ceilingLight = new THREE.PointLight(0xffe8d6, 0.6, 25);
-        ceilingLight.position.set(0, 7.5, 0);
-        this.lightsGroup.add(ceilingLight);
-
-        // Floor & Ceiling
-        const floorMat = new THREE.MeshStandardMaterial({ map: createParquetTexture(), roughness: 0.4 });
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(this.roomWidth, this.roomDepth), floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        this.roomGroup.add(floor);
-
-        const ceilMat = new THREE.MeshStandardMaterial({ color: 0xf5f6fa, roughness: 0.9 });
-        const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(this.roomWidth, this.roomDepth), ceilMat);
-        ceiling.position.y = this.wallHeight;
-        ceiling.rotation.x = Math.PI / 2;
-        this.roomGroup.add(ceiling);
-
-        // Walls
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0xecf0f1, roughness: 0.7 });
-        this.createRoomWalls(wallMat);
-
-        // Center Area Rug
-        const rugMat = new THREE.MeshStandardMaterial({ map: createRugTexture(), roughness: 0.85 });
-        const rug = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), rugMat);
-        rug.rotation.x = -Math.PI / 2;
-        rug.position.set(0, 0.02, 0);
-        rug.receiveShadow = true;
-        this.roomGroup.add(rug);
-
-        // Sofa
-        this.buildSofa(0, 4.5);
-        // Coffee table
-        this.buildCoffeeTable(0, 0);
-        // TV Console
-        this.buildTVConsole(0, -11.2);
-        // Bookshelf
-        this.buildBookshelf(-15, -4);
-        // Cat Tree
-        this.buildCatTree(13.5, -7);
-        // Armchair
-        this.buildArmchair(-8.5, 5.5);
-        // Potted plant & Lamp
-        this.buildHousePlant(-15, 11);
-        this.buildFloorLamp(14.5, 7);
-    }
-
-    // ================= LEVEL 2: THE ATTIC =================
-    buildAttic() {
-        // Lighting: Moonlight from gable window + amber antique lantern
-        const ambient = new THREE.AmbientLight(0x708090, 0.4);
-        this.lightsGroup.add(ambient);
-
-        // Cool Moonbeam through attic gable
-        const moonLight = new THREE.DirectionalLight(0xa4b0be, 0.7);
-        moonLight.position.set(-16, 14, -6);
-        moonLight.castShadow = true;
-        this.lightsGroup.add(moonLight);
-
-        // Warm Lantern in center
-        const lanternLight = new THREE.PointLight(0xff9f43, 0.9, 18);
-        lanternLight.position.set(0, 4.5, 0);
-        this.lightsGroup.add(lanternLight);
-
-        // Floor & Roof Rafters
-        const floorMat = new THREE.MeshStandardMaterial({ map: createAtticFloorTexture(), roughness: 0.65 });
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(this.roomWidth, this.roomDepth), floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        this.roomGroup.add(floor);
-
-        // Aged Wood Walls
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0x5c4d41, roughness: 0.85 });
-        this.createRoomWalls(wallMat);
-
-        // Slanted Attic Wooden Rafters / Ceiling Beams
-        const beamMat = new THREE.MeshStandardMaterial({ color: 0x3d2f26, roughness: 0.8 });
-        for (let z = -11; z <= 11; z += 5.5) {
-            // A-Frame Rafter
-            const beamL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8.5, 0.5), beamMat);
-            beamL.position.set(-7.5, 5.0, z);
-            beamL.rotation.z = -0.45;
-            beamL.castShadow = true;
-            this.roomGroup.add(beamL);
-
-            const beamR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 8.5, 0.5), beamMat);
-            beamR.position.set(7.5, 5.0, z);
-            beamR.rotation.z = 0.45;
-            beamR.castShadow = true;
-            this.roomGroup.add(beamR);
-
-            const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(16, 0.4, 0.5), beamMat);
-            crossBeam.position.set(0, 6.8, z);
-            this.roomGroup.add(crossBeam);
-        }
-
-        // Circular Gable Window showing Moonlight
-        const winMat = new THREE.MeshBasicMaterial({ color: 0x48dbfb });
-        const winMesh = new THREE.Mesh(new THREE.CircleGeometry(2.2, 16), winMat);
-        winMesh.position.set(0, 5.2, -this.roomDepth / 2 + 0.1);
-        this.roomGroup.add(winMesh);
-
-        // Attic Props:
-        // 1. Stacked Moving Boxes (Cardboard)
-        this.buildCardboardBoxStack(4, 3);
-        this.buildCardboardBoxStack(-5, -6);
-        this.buildCardboardBoxStack(10, -5);
-
-        // 2. Vintage Wooden Trunks / Chests
-        this.buildVintageTrunk(-9, 4, 0.3);
-        this.buildVintageTrunk(7, -8, -0.2);
-
-        // 3. Antique Rocking Chair
-        this.buildRockingChair(-1, -3);
-
-        // 4. Grandfather Clock
-        this.buildGrandfatherClock(13.5, 4);
-
-        // 5. Old Step Ladder
-        this.buildStepLadder(-13, 0);
-
-        // 6. Stacked Vintage Suitcases
-        this.buildSuitcaseStack(-12, 7);
-
-        // 7. Hanging Brass Lantern in Center
-        this.buildAtticLantern(0, 4.5, 0);
-    }
-
-    // ================= LEVEL 3: THE BASEMENT =================
-    buildBasement() {
-        // Lighting: Dim, moody stone cellar + glowing furnace fire pit
-        const ambient = new THREE.AmbientLight(0x2f3640, 0.35);
-        this.lightsGroup.add(ambient);
-
-        // Glowing Fire Embers from Furnace
-        const furnaceLight = new THREE.PointLight(0xff5722, 1.3, 20);
-        furnaceLight.position.set(0, 2.2, -10.5);
-        this.lightsGroup.add(furnaceLight);
-
-        // Work Light in workbench corner
-        const workLight = new THREE.PointLight(0xffeaa7, 0.8, 16);
-        workLight.position.set(-11, 4.5, 4);
-        this.lightsGroup.add(workLight);
-
-        // Floor & Walls
-        const floorMat = new THREE.MeshStandardMaterial({ map: createBasementFloorTexture(), roughness: 0.5, metalness: 0.2 });
-        const floor = new THREE.Mesh(new THREE.PlaneGeometry(this.roomWidth, this.roomDepth), floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        this.roomGroup.add(floor);
-
-        const wallMat = new THREE.MeshStandardMaterial({ map: createBasementWallTexture(), roughness: 0.75 });
-        this.createRoomWalls(wallMat);
-
-        // Concrete Ceiling with Industrial Pipes
-        const ceilMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.9 });
-        const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(this.roomWidth, this.roomDepth), ceilMat);
-        ceiling.position.y = this.wallHeight;
-        ceiling.rotation.x = Math.PI / 2;
-        this.roomGroup.add(ceiling);
-
-        // Industrial Pipes along ceiling
-        const pipeMat = new THREE.MeshStandardMaterial({ color: 0x7f8c8d, metalness: 0.8, roughness: 0.3 });
-        const pipe1 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, this.roomWidth), pipeMat);
-        pipe1.rotation.z = Math.PI / 2;
-        pipe1.position.set(0, 7.2, -6);
-        this.roomGroup.add(pipe1);
-
-        const pipe2 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, this.roomDepth), pipeMat);
-        pipe2.rotation.x = Math.PI / 2;
-        pipe2.position.set(8, 7.4, 0);
-        this.roomGroup.add(pipe2);
-
-        // Basement Props:
-        // 1. Brick Furnace / Boiler with glowing hearth
-        this.buildFurnace(0, -11.0);
-
-        // 2. Stacked Wine / Cider Barrels
-        this.buildBarrelStack(12, 6);
-        this.buildBarrelStack(13, -7);
-        this.buildBarrelStack(-13, -8);
-
-        // 3. Carpenter's Heavy Workbench with Tools
-        this.buildWorkbench(-11, 4);
-
-        // 4. Vintage Washing Machine & Laundry Basket
-        this.buildWashingMachine(-6, -10.5);
-
-        // 5. Wooden Storage Crates & Pallet
-        this.buildPalletWithCrates(6, -2);
-        this.buildPalletWithCrates(-4, 6);
-
-        // 6. Bare Edison Bulb hanging on cable
-        this.buildHangingBulb(0, 6.0, 1);
     }
 
     // --- Helper Builders ---
@@ -607,6 +646,293 @@ class LevelEnvironment {
 
         const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffeaa7 }));
         bulb.position.set(x, y, z);
+        this.roomGroup.add(bulb);
+    }
+
+    // Kitchen Props
+    buildKitchenCounter(x, z) {
+        const cGroup = new THREE.Group();
+        cGroup.position.set(x, 0, z);
+        const cabinetMat = new THREE.MeshStandardMaterial({ color: 0x4a7c94, roughness: 0.6 });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(11.6, 2.6, 2.4), cabinetMat);
+        body.position.y = 1.3;
+        body.castShadow = true;
+        cGroup.add(body);
+
+        const top = new THREE.Mesh(new THREE.BoxGeometry(12, 0.25, 2.7), new THREE.MeshStandardMaterial({ color: 0xecf0f1, roughness: 0.25 }));
+        top.position.y = 2.72;
+        top.castShadow = true;
+        cGroup.add(top);
+
+        // Cabinet doors with round knobs
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x5d9bb5, roughness: 0.55 });
+        const knobMat = new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.7, roughness: 0.3 });
+        for (let i = 0; i < 5; i++) {
+            const doorX = -4.6 + i * 2.3;
+            const door = new THREE.Mesh(new THREE.BoxGeometry(2.0, 2.0, 0.08), doorMat);
+            door.position.set(doorX, 1.35, 1.22);
+            cGroup.add(door);
+            const knob = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), knobMat);
+            knob.position.set(doorX + 0.7, 1.7, 1.3);
+            cGroup.add(knob);
+        }
+
+        // Sink with tap
+        const steelMat = new THREE.MeshStandardMaterial({ color: 0xbdc3c7, metalness: 0.8, roughness: 0.25 });
+        const sink = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.1, 1.5), new THREE.MeshStandardMaterial({ color: 0x7f8c8d, metalness: 0.6, roughness: 0.3 }));
+        sink.position.set(-2.5, 2.86, 0);
+        cGroup.add(sink);
+        const tap = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.0), steelMat);
+        tap.position.set(-2.5, 3.35, -0.75);
+        cGroup.add(tap);
+        const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.6), steelMat);
+        spout.rotation.x = Math.PI / 2;
+        spout.position.set(-2.5, 3.8, -0.45);
+        cGroup.add(spout);
+
+        // Cutting board with a wedge of cheese (very tempting for mice!)
+        const board = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.1, 1.0), new THREE.MeshStandardMaterial({ color: 0xc8a165 }));
+        board.position.set(2.5, 2.9, 0.1);
+        cGroup.add(board);
+        const cheese = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.35, 3), new THREE.MeshStandardMaterial({ color: 0xf9ca24, roughness: 0.6 }));
+        cheese.position.set(2.5, 3.13, 0.1);
+        cGroup.add(cheese);
+
+        // Upper wall cabinets
+        const upper = new THREE.Mesh(new THREE.BoxGeometry(11.6, 2.0, 1.2), cabinetMat);
+        upper.position.set(0, 5.6, -0.6);
+        upper.castShadow = true;
+        cGroup.add(upper);
+
+        this.roomGroup.add(cGroup);
+        this.addCollider(x, z, 12.2, 2.9);
+    }
+
+    buildStove(x, z) {
+        const sGroup = new THREE.Group();
+        sGroup.position.set(x, 0, z);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.7, 2.4), new THREE.MeshStandardMaterial({ color: 0xecf0f1, roughness: 0.3, metalness: 0.3 }));
+        body.position.y = 1.35;
+        body.castShadow = true;
+        sGroup.add(body);
+
+        // Oven window with a warm glow
+        const ovenWin = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.1, 0.08), new THREE.MeshBasicMaterial({ color: 0xe67e22 }));
+        ovenWin.position.set(0, 1.2, 1.22);
+        sGroup.add(ovenWin);
+
+        // Four glowing burners
+        const burnerMat = new THREE.MeshBasicMaterial({ color: 0xff3f34 });
+        [[-0.7, -0.5], [0.7, -0.5], [-0.7, 0.5], [0.7, 0.5]].forEach(([bx, bz]) => {
+            const burner = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.07, 6, 16), burnerMat);
+            burner.rotation.x = Math.PI / 2;
+            burner.position.set(bx, 2.74, bz);
+            sGroup.add(burner);
+        });
+
+        // Cooking pot on one burner
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.45, 0.7, 16), new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.4 }));
+        pot.position.set(0.7, 3.1, 0.5);
+        pot.castShadow = true;
+        sGroup.add(pot);
+
+        // Extractor hood
+        const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 1.6, 1.2, 4), new THREE.MeshStandardMaterial({ color: 0x95a5a6, metalness: 0.7, roughness: 0.3 }));
+        hood.rotation.y = Math.PI / 4;
+        hood.position.set(0, 5.6, -0.2);
+        sGroup.add(hood);
+
+        this.roomGroup.add(sGroup);
+        this.addCollider(x, z, 3.2, 2.6);
+    }
+
+    buildFridge(x, z) {
+        const fGroup = new THREE.Group();
+        fGroup.position.set(x, 0, z);
+        const fridgeMat = new THREE.MeshStandardMaterial({ color: 0xdfe6e9, roughness: 0.25, metalness: 0.4 });
+        const body = new THREE.Mesh(new THREE.BoxGeometry(3.0, 6.4, 2.6), fridgeMat);
+        body.position.y = 3.2;
+        body.castShadow = true;
+        fGroup.add(body);
+
+        // Freezer/fridge door split and handles
+        const gap = new THREE.Mesh(new THREE.BoxGeometry(3.02, 0.06, 0.05), new THREE.MeshBasicMaterial({ color: 0x636e72 }));
+        gap.position.set(0, 4.4, 1.31);
+        fGroup.add(gap);
+        const handleMat = new THREE.MeshStandardMaterial({ color: 0x636e72, metalness: 0.8, roughness: 0.2 });
+        const handleTop = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.2, 0.12), handleMat);
+        handleTop.position.set(-1.2, 5.2, 1.4);
+        fGroup.add(handleTop);
+        const handleBottom = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.0, 0.12), handleMat);
+        handleBottom.position.set(-1.2, 3.2, 1.4);
+        fGroup.add(handleBottom);
+
+        // Colorful fridge magnets
+        const magnetColors = [0xff6b6b, 0x48dbfb, 0xfeca57, 0x1dd1a1];
+        magnetColors.forEach((color, i) => {
+            const magnet = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.06), new THREE.MeshStandardMaterial({ color: color }));
+            magnet.position.set(-0.2 + (i % 2) * 0.7, 2.4 + Math.floor(i / 2) * 0.7, 1.32);
+            magnet.rotation.z = (i - 1.5) * 0.2;
+            fGroup.add(magnet);
+        });
+
+        this.roomGroup.add(fGroup);
+        this.addCollider(x, z, 3.2, 2.8);
+    }
+
+    buildKitchenIsland(x, z) {
+        const iGroup = new THREE.Group();
+        iGroup.position.set(x, 0, z);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(6.4, 2.6, 2.6), new THREE.MeshStandardMaterial({ color: 0x8e5e3c, roughness: 0.6 }));
+        body.position.y = 1.3;
+        body.castShadow = true;
+        iGroup.add(body);
+
+        const top = new THREE.Mesh(new THREE.BoxGeometry(7.0, 0.25, 3.2), new THREE.MeshStandardMaterial({ color: 0x2d3436, roughness: 0.2, metalness: 0.2 }));
+        top.position.y = 2.72;
+        top.castShadow = true;
+        iGroup.add(top);
+
+        // Fruit bowl
+        const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.7, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+        bowl.position.set(-1.5, 3.55, 0);
+        iGroup.add(bowl);
+        const fruitColors = [0xe74c3c, 0xf39c12, 0x27ae60, 0xe74c3c];
+        fruitColors.forEach((color, i) => {
+            const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 10), new THREE.MeshStandardMaterial({ color: color, roughness: 0.4 }));
+            fruit.position.set(-1.8 + (i % 2) * 0.55, 3.25 + Math.floor(i / 2) * 0.2, -0.2 + Math.floor(i / 2) * 0.35);
+            iGroup.add(fruit);
+        });
+
+        // Three bar stools on the front side
+        const stoolMat = new THREE.MeshStandardMaterial({ color: 0xd35400, roughness: 0.5 });
+        const legMat = new THREE.MeshStandardMaterial({ color: 0x2d3436, metalness: 0.6 });
+        for (let i = -1; i <= 1; i++) {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.8), legMat);
+            leg.position.set(i * 2.2, 0.9, 1.9);
+            iGroup.add(leg);
+            const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.18, 16), stoolMat);
+            seat.position.set(i * 2.2, 1.85, 1.9);
+            seat.castShadow = true;
+            iGroup.add(seat);
+        }
+
+        this.roomGroup.add(iGroup);
+        // Stools sit outside the island block, so the collider includes them
+        this.addCollider(x, z + 0.4, 7.2, 4.0);
+    }
+
+    buildDiningTable(x, z) {
+        const tGroup = new THREE.Group();
+        tGroup.position.set(x, 0, z);
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0xa0522d, roughness: 0.5 });
+        const top = new THREE.Mesh(new THREE.BoxGeometry(5.0, 0.2, 3.2), woodMat);
+        top.position.y = 2.1;
+        top.castShadow = true;
+        tGroup.add(top);
+        [[-2.2, -1.3], [2.2, -1.3], [-2.2, 1.3], [2.2, 1.3]].forEach(([lx, lz]) => {
+            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.0, 0.25), woodMat);
+            leg.position.set(lx, 1.0, lz);
+            tGroup.add(leg);
+        });
+
+        // Red-and-white checked tablecloth runner
+        const cloth = new THREE.Mesh(new THREE.BoxGeometry(5.1, 0.04, 1.2), new THREE.MeshStandardMaterial({ color: 0xff7675 }));
+        cloth.position.y = 2.22;
+        tGroup.add(cloth);
+
+        // Four chairs around the table
+        const chairMat = new THREE.MeshStandardMaterial({ color: 0xf5f6fa, roughness: 0.6 });
+        [[-1.2, -2.3, 0], [1.2, -2.3, 0], [-1.2, 2.3, Math.PI], [1.2, 2.3, Math.PI]].forEach(([cx, cz, rot]) => {
+            const chair = new THREE.Group();
+            chair.position.set(cx, 0, cz);
+            chair.rotation.y = rot;
+            const seat = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.15, 1.2), chairMat);
+            seat.position.y = 1.3;
+            seat.castShadow = true;
+            chair.add(seat);
+            const back = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.5, 0.12), chairMat);
+            back.position.set(0, 2.05, -0.55);
+            chair.add(back);
+            [[-0.55, -0.5], [0.55, -0.5], [-0.55, 0.5], [0.55, 0.5]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.3, 0.12), chairMat);
+                leg.position.set(lx, 0.65, lz);
+                chair.add(leg);
+            });
+            tGroup.add(chair);
+        });
+
+        this.roomGroup.add(tGroup);
+        this.addCollider(x, z, 5.4, 6.0);
+    }
+
+    buildPantryShelf(x, z) {
+        const pGroup = new THREE.Group();
+        pGroup.position.set(x, 0, z);
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0x6d4c41, roughness: 0.7 });
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(1.8, 6.0, 4.6), woodMat);
+        frame.position.y = 3.0;
+        frame.castShadow = true;
+        pGroup.add(frame);
+
+        // Jars and cans on the shelves (facing into the room, +x)
+        const itemColors = [0xe17055, 0xfdcb6e, 0x00b894, 0x0984e3, 0xd63031, 0xa29bfe];
+        for (let shelf = 0; shelf < 3; shelf++) {
+            for (let i = 0; i < 4; i++) {
+                const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.8, 10), new THREE.MeshStandardMaterial({ color: itemColors[(shelf * 4 + i) % itemColors.length], roughness: 0.4 }));
+                jar.position.set(0.95, 1.2 + shelf * 1.8, -1.6 + i * 1.05);
+                pGroup.add(jar);
+            }
+        }
+
+        this.roomGroup.add(pGroup);
+        this.addCollider(x, z, 2.4, 4.8);
+    }
+
+    buildTrashBin(x, z) {
+        const bin = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.65, 2.0, 16), new THREE.MeshStandardMaterial({ color: 0xb2bec3, metalness: 0.25, roughness: 0.35 }));
+        bin.position.set(x, 1.0, z);
+        bin.castShadow = true;
+        this.roomGroup.add(bin);
+
+        const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.12, 16), new THREE.MeshStandardMaterial({ color: 0x00b894, roughness: 0.4 }));
+        lid.position.set(x, 2.06, z);
+        this.roomGroup.add(lid);
+        this.addCollider(x, z, 1.7, 1.7);
+    }
+
+    // Vincenzo's own food and water bowls (decoration, can be walked over)
+    buildCatBowls(x, z) {
+        const foodBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.45, 0.3, 16), new THREE.MeshStandardMaterial({ color: 0xe84393, roughness: 0.4 }));
+        foodBowl.position.set(x - 0.7, 0.15, z);
+        this.roomGroup.add(foodBowl);
+        const brokjesMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+        for (let i = 0; i < 8; i++) {
+            const brokje = new THREE.Mesh(new THREE.SphereGeometry(0.1, 6, 6), brokjesMat);
+            brokje.position.set(x - 0.7 + (Math.random() - 0.5) * 0.6, 0.32, z + (Math.random() - 0.5) * 0.6);
+            this.roomGroup.add(brokje);
+        }
+
+        const waterBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.45, 0.3, 16), new THREE.MeshStandardMaterial({ color: 0x0984e3, roughness: 0.4 }));
+        waterBowl.position.set(x + 0.7, 0.15, z);
+        this.roomGroup.add(waterBowl);
+        const water = new THREE.Mesh(new THREE.CircleGeometry(0.45, 16), new THREE.MeshStandardMaterial({ color: 0x74b9ff, roughness: 0.1, metalness: 0.3 }));
+        water.rotation.x = -Math.PI / 2;
+        water.position.set(x + 0.7, 0.29, z);
+        this.roomGroup.add(water);
+    }
+
+    buildPendantLamp(x, y, z) {
+        const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 8 - y), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+        cord.position.set(x, y + (8 - y) / 2, z);
+        this.roomGroup.add(cord);
+
+        const shade = new THREE.Mesh(new THREE.ConeGeometry(0.8, 0.7, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0xe1b12c, roughness: 0.4, side: THREE.DoubleSide }));
+        shade.position.set(x, y, z);
+        this.roomGroup.add(shade);
+
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff3c4 }));
+        bulb.position.set(x, y - 0.3, z);
         this.roomGroup.add(bulb);
     }
 }

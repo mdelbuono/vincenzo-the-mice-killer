@@ -1,6 +1,19 @@
+import * as THREE from 'three';
+import { buildOutfit, buildBlasterModel } from './outfits.js';
+import { createNameTagTexture } from './textures.js';
+
 // --- Vincenzo (The 3D Cat with Name Tag) ---
-class Cat {
-    constructor(scene) {
+export const DEFAULT_CAT_APPEARANCE = {
+    name: 'Vincenzo',
+    fur: 0xffffff,
+    spots: 0xd63031,
+    eyes: 0x2ecc71,
+    outfits: [],
+    blaster: false
+};
+
+export class Cat {
+    constructor(scene, appearance = DEFAULT_CAT_APPEARANCE) {
         this.scene = scene;
         this.mesh = new THREE.Group();
 
@@ -19,18 +32,31 @@ class Cat {
         this.pounceCooldown = 0;
         this.stamina = 100;
         this.maxStamina = 100;
+        this.speedBoost = 1.0; // Multiplier from shop "Zoomies" boost
+        this.sneezeTimer = 0;
 
         this.walkCycle = 0;
 
+        this.appearance = { ...DEFAULT_CAT_APPEARANCE, ...appearance };
         this.buildModel();
         this.scene.add(this.mesh);
     }
 
+    // Rebuilds the cat with a new look (fur/spot/eye colors, name, outfits, blaster)
+    setAppearance(appearance) {
+        this.appearance = { ...DEFAULT_CAT_APPEARANCE, ...appearance };
+        while (this.mesh.children.length > 0) {
+            this.mesh.remove(this.mesh.children[0]);
+        }
+        this.buildModel();
+    }
+
     buildModel() {
-        const whiteFur = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.45 });
-        const redSpotMat = new THREE.MeshStandardMaterial({ color: 0xd63031, roughness: 0.5 }); // Two distinct red spots
+        const look = this.appearance;
+        const whiteFur = new THREE.MeshStandardMaterial({ color: look.fur, roughness: 0.45 });
+        const redSpotMat = new THREE.MeshStandardMaterial({ color: look.spots, roughness: 0.5 }); // Two distinct spots
         const pinkMat = new THREE.MeshStandardMaterial({ color: 0xffb8b8, roughness: 0.7 });
-        const eyeMat = new THREE.MeshStandardMaterial({ color: 0x2ecc71, roughness: 0.1, emissive: 0x27ae60, emissiveIntensity: 0.3 });
+        const eyeMat = new THREE.MeshStandardMaterial({ color: look.eyes, roughness: 0.1, emissive: look.eyes, emissiveIntensity: 0.3 });
         const collarMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.3 });
         const bellMat = new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.8, roughness: 0.2 });
 
@@ -147,7 +173,25 @@ class Cat {
         bell.position.set(0, -0.34, -0.28);
         this.headGroup.add(bell);
 
+        // Shop outfits (hats, beards, glasses, bow ties...)
+        let outfitTop = 0; // Highest point of any outfit, in headGroup space
+        look.outfits.forEach(builderName => {
+            const piece = buildOutfit(builderName);
+            if (!piece) return;
+            this.headGroup.add(piece);
+            piece.updateMatrix();
+            const box = new THREE.Box3().setFromObject(piece);
+            outfitTop = Math.max(outfitTop, box.max.y);
+        });
+
         this.bodyGroup.add(this.headGroup);
+
+        // Brokjes Blaster strapped to the back
+        if (look.blaster) {
+            const blaster = buildBlasterModel();
+            blaster.position.set(0.36, 0.3, -0.1);
+            this.bodyGroup.add(blaster);
+        }
 
         // White Legs
         this.legs = [];
@@ -199,15 +243,17 @@ class Cat {
 
         this.mesh.add(this.bodyGroup);
 
-        // FLOATING NAME TAG: "🐾 Vincenzo"
+        // FLOATING NAME TAG: "🐾 <name>"
         const nameTagMat = new THREE.SpriteMaterial({
-            map: createNameTagTexture(),
+            map: createNameTagTexture(look.name),
             transparent: true,
             depthTest: false
         });
         this.nameTag = new THREE.Sprite(nameTagMat);
         this.nameTag.scale.set(1.7, 0.46, 1);
-        this.nameTag.position.set(0, 1.55, -0.6);
+        // Float the name tag above tall hats so it doesn't hide them
+        const hatClearance = Math.max(0, outfitTop - 0.45);
+        this.nameTag.position.set(0, 1.55 + hatClearance, -0.6);
         this.mesh.add(this.nameTag);
     }
 
@@ -217,6 +263,10 @@ class Cat {
         this.pounceTimer = 0.35;
         this.pounceCooldown = 0.6;
         this.speed = Math.max(this.speed, 14.0);
+    }
+
+    triggerSneeze() {
+        this.sneezeTimer = 0.5;
     }
 
     update(dt, input, room) {
@@ -244,7 +294,7 @@ class Cat {
             this.rotationY -= this.angularSpeed * dt;
         }
 
-        const topSpeed = this.isSprinting ? this.sprintSpeed : this.maxSpeed;
+        const topSpeed = (this.isSprinting ? this.sprintSpeed : this.maxSpeed) * this.speedBoost;
         if (input.forward) {
             this.speed = Math.min(topSpeed, this.speed + this.acceleration * dt);
         } else if (input.backward) {
@@ -306,5 +356,16 @@ class Cat {
         if (input.turnLeft) this.headGroup.rotation.y = 0.25;
         else if (input.turnRight) this.headGroup.rotation.y = -0.25;
         else this.headGroup.rotation.y *= 0.8;
+
+        // Sneeze: head snaps back then forward
+        if (this.sneezeTimer > 0) {
+            this.sneezeTimer = Math.max(0, this.sneezeTimer - dt);
+            const p = 1 - this.sneezeTimer / 0.5;
+            if (p < 0.35) this.headGroup.rotation.x = -0.5 * (p / 0.35);
+            else if (p < 0.5) this.headGroup.rotation.x = -0.5 + 0.95 * ((p - 0.35) / 0.15);
+            else this.headGroup.rotation.x = 0.45 * (1 - (p - 0.5) / 0.5);
+        } else {
+            this.headGroup.rotation.x = 0;
+        }
     }
 }

@@ -1,0 +1,22 @@
+{
+  "name": "vincenzo-the-mice-killer",
+  "version": "1.0.0",
+  "description": "A 3D browser game built with Three.js: hunt mice across 4 levels of a house as Vincenzo the cat.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Marcello Del Buono",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
+    "preview": "vite preview",
+    "play": "vite build && node scripts/snapshot.js && vite preview --outDir .play --port 4180 --strictPort --open"
+  },
+  "dependencies": {
+    "three": "0.128.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.4"
+  }
+}

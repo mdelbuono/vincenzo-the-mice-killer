@@ -1,5 +1,7 @@
+import * as THREE from 'three';
+
 // --- Procedural Canvas Textures ---
-function createNameTagTexture() {
+export function createNameTagTexture(name = 'Vincenzo') {
     const canvas = document.createElement('canvas');
     canvas.width = 300;
     canvas.height = 80;
@@ -28,13 +30,13 @@ function createNameTagTexture() {
     ctx.font = 'bold 36px "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🐾 Vincenzo', 150, 40);
+    ctx.fillText(`🐾 ${name}`, 150, 40);
 
     const texture = new THREE.CanvasTexture(canvas);
     return texture;
 }
 
-function createCatchPromptTexture() {
+export function createCatchPromptTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 76;
@@ -70,7 +72,7 @@ function createCatchPromptTexture() {
 }
 
 // 1. Living Room Parquet Floor
-function createParquetTexture() {
+export function createParquetTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
@@ -120,7 +122,7 @@ function createParquetTexture() {
 }
 
 // 2. Attic Dusty Rustic Wood Plank Floor
-function createAtticFloorTexture() {
+export function createAtticFloorTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
@@ -167,7 +169,7 @@ function createAtticFloorTexture() {
 }
 
 // 3. Basement Stone Flagstone Floor
-function createBasementFloorTexture() {
+export function createBasementFloorTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
@@ -213,7 +215,7 @@ function createBasementFloorTexture() {
 }
 
 // 4. Basement Brick Wall Texture
-function createBasementWallTexture() {
+export function createBasementWallTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
@@ -240,7 +242,72 @@ function createBasementWallTexture() {
     return texture;
 }
 
-function createRugTexture() {
+// 5. Kitchen Checkerboard Floor Texture
+export function createKitchenFloorTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    const tiles = 8;
+    const size = 512 / tiles;
+    for (let r = 0; r < tiles; r++) {
+        for (let c = 0; c < tiles; c++) {
+            const light = (r + c) % 2 === 0;
+            const shade = Math.floor(Math.random() * 10);
+            ctx.fillStyle = light ? `rgb(${238 - shade}, ${234 - shade}, ${224 - shade})` : `rgb(${45 + shade}, ${52 + shade}, ${64 + shade})`;
+            ctx.fillRect(c * size, r * size, size, size);
+
+            // Soft shine in the corner of each tile
+            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+            ctx.fillRect(c * size + 6, r * size + 6, size / 3, size / 3);
+        }
+    }
+
+    // Grout lines
+    ctx.strokeStyle = 'rgba(120,120,120,0.5)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i <= 512; i += size) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 512); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(512, i); ctx.stroke();
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(3, 2.5);
+    return texture;
+}
+
+// 6. Kitchen Mint Subway Tile Wall Texture
+export function createKitchenWallTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#d9d2c3';
+    ctx.fillRect(0, 0, 512, 512);
+
+    const tH = 24;
+    const tW = 48;
+    for (let y = 0; y < 512; y += tH) {
+        const shift = (y / tH) % 2 === 0 ? 0 : tW / 2;
+        for (let x = -tW; x < 512; x += tW) {
+            const shade = Math.floor(Math.random() * 12);
+            ctx.fillStyle = `rgb(${168 + shade}, ${222 + shade / 2}, ${204 + shade / 2})`;
+            ctx.fillRect(x + shift + 2, y + 2, tW - 4, tH - 4);
+        }
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(4, 2);
+    return texture;
+}
+
+export function createRugTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
@@ -279,7 +346,7 @@ function createRugTexture() {
     return texture;
 }
 
-function createTVCanvasTexture() {
+export function createTVCanvasTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 160;

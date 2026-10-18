@@ -151,3 +151,6 @@ vite.config.ts.timestamp-*
 # Local files
 PROJECT_CONTEXT.md
 
+
+# Frozen copy of the game served by `npm run play`
+.play/

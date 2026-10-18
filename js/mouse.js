@@ -1,8 +1,15 @@
+import * as THREE from 'three';
+import { createCatchPromptTexture } from './textures.js';
+
 // --- The Mice (Roam in Room, Level Difficulty Speed Scaling) ---
-class Mouse {
-    constructor(scene, room, speedMultiplier = 1.0) {
+// Golden mice are rare: faster, more alert, and worth more brokjes.
+const GOLDEN_SPEED_MULT = 1.5;
+
+export class Mouse {
+    constructor(scene, room, speedMultiplier = 1.0, golden = false) {
         this.scene = scene;
         this.room = room;
+        this.golden = golden;
         this.mesh = new THREE.Group();
 
         this.position = new THREE.Vector3();
@@ -10,8 +17,10 @@ class Mouse {
 
         this.rotationY = Math.random() * Math.PI * 2;
         this.state = 'ROAMING';
-        this.speed = 4.2 * speedMultiplier;
-        this.fleeSpeed = 7.5 * speedMultiplier;
+        const goldenMult = golden ? GOLDEN_SPEED_MULT : 1.0;
+        this.speed = 4.2 * speedMultiplier * goldenMult;
+        this.fleeSpeed = 7.5 * speedMultiplier * goldenMult;
+        this.alertDistance = golden ? 9.0 : 6.5; // Golden mice notice the cat sooner
         this.walkCycle = 0;
 
         this.wanderTarget = new THREE.Vector3();
@@ -51,7 +60,9 @@ class Mouse {
     }
 
     buildModel() {
-        const mouseMat = new THREE.MeshStandardMaterial({ color: 0x7f8c8d, roughness: 0.6 });
+        const mouseMat = this.golden
+            ? new THREE.MeshStandardMaterial({ color: 0xffd32a, metalness: 0.5, roughness: 0.25, emissive: 0xb8860b, emissiveIntensity: 0.5 })
+            : new THREE.MeshStandardMaterial({ color: 0x7f8c8d, roughness: 0.6 });
         const pinkMat = new THREE.MeshStandardMaterial({ color: 0xffa8a8, roughness: 0.7 });
         const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
 
@@ -96,6 +107,26 @@ class Mouse {
         this.tail.position.set(0, 0.16, 0.4);
         this.mesh.add(this.tail);
 
+        // Golden mice wear a spinning sparkle halo
+        if (this.golden) {
+            this.halo = new THREE.Group();
+            const ring = new THREE.Mesh(
+                new THREE.TorusGeometry(0.42, 0.03, 6, 24),
+                new THREE.MeshBasicMaterial({ color: 0xffd32a, transparent: true, opacity: 0.8 })
+            );
+            ring.rotation.x = Math.PI / 2;
+            this.halo.add(ring);
+            const sparkleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            for (let i = 0; i < 4; i++) {
+                const a = (i / 4) * Math.PI * 2;
+                const sparkle = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), sparkleMat);
+                sparkle.position.set(Math.cos(a) * 0.42, 0, Math.sin(a) * 0.42);
+                this.halo.add(sparkle);
+            }
+            this.halo.position.y = 0.45;
+            this.mesh.add(this.halo);
+        }
+
         const exclamGroup = new THREE.Group();
         const exclamBar = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 0.08), new THREE.MeshBasicMaterial({ color: 0xff3838 }));
         exclamBar.position.y = 0.18;
@@ -124,7 +155,7 @@ class Mouse {
         if (this.state === 'CAUGHT') return;
 
         const distToCat = this.position.distanceTo(catPos);
-        const isCatNear = distToCat < 6.5;
+        const isCatNear = distToCat < this.alertDistance;
 
         const inCatchRange = distToCat <= 3.2;
         if (this.catchPromptSprite) {
@@ -215,6 +246,7 @@ class Mouse {
         }
         this.mesh.rotation.y = this.rotationY;
         this.tail.rotation.y = Math.sin(this.walkCycle * 0.8) * 0.35;
+        if (this.halo) this.halo.rotation.y += dt * 3;
     }
 
     destroy() {

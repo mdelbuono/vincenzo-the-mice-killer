@@ -1,0 +1,131 @@
+{
+  "categories": [
+    { "id": "cats",    "name": "Cats",      "icon": "🐱" },
+    { "id": "boosts",  "name": "Boosts",    "icon": "⚡" },
+    { "id": "weapons", "name": "Weapons",   "icon": "🤧" },
+    { "id": "clothes", "name": "Clothes",   "icon": "🎩" },
+    { "id": "mystery", "name": "Surprises", "icon": "🎁" }
+  ],
+  "items": [
+    {
+      "id": "cat_vincenzo", "category": "cats", "type": "cat", "default": true,
+      "name": "Vincenzo", "icon": "🐱", "price": 0,
+      "description": "The original white mouse hunter with two red spots.",
+      "fur": "0xffffff", "spots": "0xd63031", "eyes": "0x2ecc71"
+    },
+    {
+      "id": "cat_luna", "category": "cats", "type": "cat",
+      "name": "Luna", "icon": "🐈‍⬛", "price": 300,
+      "description": "A sleek black cat with golden eyes. Silent as the night.",
+      "fur": "0x2f3542", "spots": "0xdfe4ea", "eyes": "0xffd32a"
+    },
+    {
+      "id": "cat_tigro", "category": "cats", "type": "cat",
+      "name": "Tigro", "icon": "🐯", "price": 400,
+      "description": "A fiery orange tabby who loves the chase.",
+      "fur": "0xff9f43", "spots": "0x8e3b00", "eyes": "0x2ecc71"
+    },
+    {
+      "id": "cat_nuvola", "category": "cats", "type": "cat",
+      "name": "Nuvola", "icon": "☁️", "price": 500,
+      "description": "A fluffy grey cloud of a cat with icy blue eyes.",
+      "fur": "0xa4b0be", "spots": "0x57606f", "eyes": "0x48dbfb"
+    },
+    {
+      "id": "cat_biscotto", "category": "cats", "type": "cat",
+      "name": "Biscotto", "icon": "🍪", "price": 600,
+      "description": "A cream-colored cookie cat with chocolate spots.",
+      "fur": "0xf5e6ca", "spots": "0x8b5a2b", "eyes": "0xff9f43"
+    },
+    {
+      "id": "cat_bubblegum", "category": "cats", "type": "cat",
+      "name": "Bubblegum", "icon": "🩷", "price": 800,
+      "description": "A bright pink legend with purple spots. Very rare!",
+      "fur": "0xffb8e0", "spots": "0x9b59b6", "eyes": "0x3742fa"
+    },
+
+    {
+      "id": "boost_speed", "category": "boosts", "type": "boost", "effect": "speed",
+      "name": "Zoomies", "icon": "⚡", "price": 60, "quantity": 1,
+      "value": 1.6, "duration": 20, "key": "1",
+      "description": "Run 1.6x faster for 20 seconds. Press 1 during the hunt."
+    },
+    {
+      "id": "boost_kibbles2", "category": "boosts", "type": "boost", "effect": "kibbles",
+      "name": "Double Kibbles", "icon": "💰", "price": 80, "quantity": 1,
+      "value": 2, "duration": 20, "key": "2",
+      "description": "Every mouse gives 2x kibbles for 20 seconds. Press 2 during the hunt."
+    },
+    {
+      "id": "boost_kibbles3", "category": "boosts", "type": "boost", "effect": "kibbles",
+      "name": "Triple Kibbles", "icon": "💎", "price": 150, "quantity": 1,
+      "value": 3, "duration": 20, "key": "3",
+      "description": "Every mouse gives 3x kibbles for 20 seconds. Press 3 during the hunt."
+    },
+
+    {
+      "id": "sneeze", "category": "weapons", "type": "ammo", "weapon": "sneeze",
+      "name": "Pepper Sneeze", "icon": "🤧", "price": 400, "quantity": 3,
+      "radius": 6, "key": "e",
+      "description": "3 mighty sneezes. Press E: every mouse nearby is knocked out instantly!"
+    },
+    {
+      "id": "blaster", "category": "weapons", "type": "unlock", "weapon": "blaster",
+      "name": "Kibble Blaster", "icon": "🔫", "price": 250,
+      "includes": { "blaster_ammo": 10 },
+      "description": "A toy blaster that zaps mice from far away. Comes with 10 pellets. Press F to fire."
+    },
+    {
+      "id": "blaster_ammo", "category": "weapons", "type": "ammo", "weapon": "blaster", "requires": "blaster",
+      "name": "Kibble Pellets", "icon": "🟠", "price": 50, "quantity": 10, "key": "f",
+      "description": "10 glowing pellets for the Kibble Blaster."
+    },
+
+    {
+      "id": "hat_top", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "topHat",
+      "name": "Top Hat", "icon": "🎩", "price": 120,
+      "description": "Very fancy. Very gentlecat."
+    },
+    {
+      "id": "hat_party", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "partyHat",
+      "name": "Party Hat", "icon": "🥳", "price": 80,
+      "description": "Every catch is a celebration!"
+    },
+    {
+      "id": "hat_crown", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "crown",
+      "name": "Golden Crown", "icon": "👑", "price": 300,
+      "description": "For the true king (or queen) of the house."
+    },
+    {
+      "id": "face_beard", "category": "clothes", "type": "outfit", "slot": "face", "builder": "beard",
+      "name": "Wizard Beard", "icon": "🧔", "price": 100,
+      "description": "A long white beard full of ancient mouse-hunting wisdom."
+    },
+    {
+      "id": "face_moustache", "category": "clothes", "type": "outfit", "slot": "face", "builder": "moustache",
+      "name": "Moustache", "icon": "👨", "price": 60,
+      "description": "A curly black moustache. Magnifico!"
+    },
+    {
+      "id": "face_sunglasses", "category": "clothes", "type": "outfit", "slot": "face", "builder": "sunglasses",
+      "name": "Cool Shades", "icon": "😎", "price": 120,
+      "description": "Too cool for the mice to handle."
+    },
+    {
+      "id": "neck_bowtie", "category": "clothes", "type": "outfit", "slot": "neck", "builder": "bowTie",
+      "name": "Bow Tie", "icon": "🎀", "price": 70,
+      "description": "A smart blue bow tie for formal hunts."
+    },
+    {
+      "id": "neck_scarf", "category": "clothes", "type": "outfit", "slot": "neck", "builder": "scarf",
+      "name": "Cozy Scarf", "icon": "🧣", "price": 90,
+      "description": "A warm striped scarf for the chilly attic."
+    },
+
+    {
+      "id": "mystery_box", "category": "mystery", "type": "mystery",
+      "name": "Surprise Box", "icon": "🎁", "price": 120,
+      "description": "What's inside? Could be a cat, clothes, a weapon or a boost!"
+    }
+  ]
+}

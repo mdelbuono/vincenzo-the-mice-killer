@@ -5,13 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Vincenzo The Mice Killer - 3D 3-Level Game</title>
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="css/style.css">
-    <!-- Three.js Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 
     <div id="canvas-container"></div>
+
+    <!-- Shop Button (top-left, always reachable, also from menus) -->
+    <button id="shop-btn" class="shop-btn" title="Brokjes Shop">
+        <span class="shop-btn-icon">🛒</span>
+        <span class="shop-btn-text">
+            <span class="shop-btn-label">Shop</span>
+            <span class="shop-btn-wallet">🥫 <span id="shop-btn-wallet">0</span></span>
+        </span>
+    </button>
 
     <!-- HUD Overlay -->
     <div id="hud">
@@ -20,8 +27,9 @@
             <div class="cat-card">
                 <div class="cat-avatar">🐱</div>
                 <div class="cat-info">
-                    <h2>Vincenzo</h2>
+                    <h2 id="hud-cat-name">Vincenzo</h2>
                     <p id="hud-level-name">Level 1: Living Room</p>
+                    <p class="hud-player" id="hud-player-name"></p>
                     <div class="stamina-container" title="Sprint Stamina">
                         <div class="stamina-bar" id="stamina-bar"></div>
                     </div>
@@ -31,7 +39,7 @@
             <!-- Stats Bar -->
             <div class="dashboard">
                 <div class="stat-box stat-score">
-                    <div class="stat-label">Kibbles</div>
+                    <div class="stat-label">Brokjes</div>
                     <div class="stat-value" id="hud-score">0</div>
                 </div>
                 <div class="stat-box stat-caught">
@@ -55,6 +63,9 @@
             </div>
         </div>
 
+        <!-- Power-ups bought in the shop (keys 1/2/3/E/F, or tap) -->
+        <div id="powerup-bar" class="powerup-bar"></div>
+
         <!-- Prominent Catch Alert Prompt -->
         <div id="catch-action-hint" class="catch-action-hint">
             <span class="pulse-key">SPACEBAR</span> PRESS TO CATCH MOUSE! 🐾
@@ -70,6 +81,8 @@
                 <div class="hint-item highlight"><span class="key-badge primary">SPACEBAR</span> Catch / Pounce</div>
                 <div class="hint-item"><span class="key-badge">SHIFT</span> Sprint</div>
                 <div class="hint-item"><span class="key-badge">C</span> Switch Cam</div>
+                <div class="hint-item"><span class="key-badge">1 2 3</span> Boosts</div>
+                <div class="hint-item"><span class="key-badge">E</span> Sneeze <span class="key-badge">F</span> Blaster</div>
             </div>
 
             <!-- Quick Action Buttons -->
@@ -98,21 +111,34 @@
             <div style="font-size: 46px; margin-bottom: 6px;">🐾 🛋️ 📦 🍷</div>
             <h1 class="screen-title">Vincenzo</h1>
             <p style="font-size: 19px; color: #ffa502; font-weight: 700; margin-top:-6px; margin-bottom: 12px;">The Mice Killer</p>
-            <p class="screen-subtitle" id="start-screen-subtitle">3-Level 3D Mouse Hunting Campaign</p>
+            <p class="screen-subtitle" id="start-screen-subtitle">4-Level 3D Mouse Hunting Campaign</p>
             
+            <!-- Player accounts: each player has their own brokjes and purchases -->
+            <div class="account-box">
+                <div class="account-title">👤 Who's playing?</div>
+                <div class="account-list" id="account-list"></div>
+                <form class="account-add" id="account-add-form" autocomplete="off">
+                    <input type="text" id="account-name-input" placeholder="New player name">
+                    <button type="submit" class="secondary-btn">＋ Add player</button>
+                </form>
+                <div class="account-error" id="account-error"></div>
+            </div>
+
             <div class="level-selector-row">
                 <button class="lvl-pill active" data-level="1">Lvl 1: Living Room (10)</button>
                 <button class="lvl-pill" data-level="2">Lvl 2: The Attic (15)</button>
                 <button class="lvl-pill" data-level="3">Lvl 3: The Basement (20)</button>
+                <button class="lvl-pill" data-level="4">Lvl 4: The Kitchen (25)</button>
             </div>
 
             <div class="mission-box" id="start-mission-desc">
                 <strong>Campaign Rules:</strong>
                 <ul>
-                    <li>Level 1 (Living Room): Catch <strong>10 mice</strong> in 3 minutes (+50 bonus kibbles).</li>
-                    <li>Level 2 (The Attic): Catch <strong>15 mice</strong> in 2.5 minutes (faster mice! +100 bonus kibbles).</li>
-                    <li>Level 3 (The Basement): Catch <strong>20 mice</strong> in 2 minutes (intense swarm! +200 bonus kibbles).</li>
-                    <li>Each mouse caught awards <strong>10 kibbles</strong>.</li>
+                    <li>Level 1 (Living Room): Catch <strong>10 mice</strong> in 3 minutes (+50 bonus brokjes).</li>
+                    <li>Level 2 (The Attic): Catch <strong>15 mice</strong> in 2.5 minutes (faster mice! +100 bonus brokjes).</li>
+                    <li>Level 3 (The Basement): Catch <strong>20 mice</strong> in 2 minutes (intense swarm! +200 bonus brokjes).</li>
+                    <li>Level 4 (The Kitchen): Catch <strong>25 mice</strong> in 2 minutes (the fastest mice yet! +300 bonus brokjes).</li>
+                    <li>Each mouse caught awards <strong>10 brokjes</strong>.</li>
                     <li>Press <strong>SPACEBAR</strong> when near a mouse to pounce and catch it!</li>
                 </ul>
             </div>
@@ -135,16 +161,18 @@
                     Mice Caught: <b id="lvl-clear-caught" style="color: #2ed573;">10 / 10</b>
                 </div>
                 <div id="lvl-clear-bonus-row" style="font-size: 16px; color: #ff9f43; margin-bottom: 6px;">
-                    Level Bonus: <b id="lvl-clear-bonus" style="color: #ffd32a;">+50 Kibbles</b> 🥫
+                    Level Bonus: <b id="lvl-clear-bonus" style="color: #ffd32a;">+50 Brokjes</b> 🥫
                 </div>
                 <div style="font-size: 22px; color: #ffd32a; font-weight: 900; margin-top: 6px;">
-                    Total Kibbles: <span id="lvl-clear-score">150</span>
+                    Total Brokjes: <span id="lvl-clear-score">150</span>
                 </div>
             </div>
 
             <button class="action-button" id="next-level-btn">
                 <span id="next-level-btn-text">Proceed to Level 2</span> ➡️
             </button>
+            <br>
+            <button class="secondary-btn" data-main-menu>🏠 Main Menu</button>
         </div>
     </div>
 
@@ -160,7 +188,7 @@
                     Mice Caught: <b id="final-caught" style="color: #ff4757;">8 / 15</b>
                 </div>
                 <div style="font-size: 22px; color: #ffd32a; font-weight: 900; margin-top: 6px;">
-                    Total Kibbles: <span id="final-score">1200</span>
+                    Total Brokjes: <span id="final-score">1200</span>
                 </div>
             </div>
 
@@ -171,6 +199,7 @@
             <button class="secondary-btn" id="restart-all-btn">
                 Start from Level 1
             </button>
+            <button class="secondary-btn" data-main-menu>🏠 Main Menu</button>
         </div>
     </div>
 
@@ -183,16 +212,37 @@
             <button class="action-button" id="resume-game-btn">
                 <span>Resume Hunt</span> ▶️
             </button>
+            <br>
+            <button class="secondary-btn" data-main-menu>🏠 Main Menu</button>
         </div>
     </div>
 
-    <!-- Modular Game Scripts -->
-    <script src="js/sound.js"></script>
-    <script src="js/textures.js"></script>
-    <script src="js/particles.js"></script>
-    <script src="js/environment.js"></script>
-    <script src="js/cat.js"></script>
-    <script src="js/mouse.js"></script>
-    <script src="js/game.js"></script>
+    <!-- Shop Overlay -->
+    <div id="shop-screen" class="overlay-screen" style="display: none;">
+        <div class="screen-modal shop-modal">
+            <div class="shop-header">
+                <h1 class="screen-title">🛒 Brokjes Shop</h1>
+                <div class="shop-player" id="shop-player"></div>
+                <div class="shop-wallet">🥫 <span id="shop-wallet">0</span> brokjes</div>
+                <button class="btn-icon shop-close" id="shop-close-btn" title="Close Shop (Esc)">✖</button>
+            </div>
+            <div class="shop-tabs level-selector-row" id="shop-tabs"></div>
+            <div class="shop-grid" id="shop-grid"></div>
+
+            <!-- Surprise Box Reveal -->
+            <div class="shop-reveal" id="shop-reveal" style="display: none;">
+                <div class="shop-reveal-card">
+                    <div class="shop-reveal-title">🎁 Surprise! You got...</div>
+                    <div class="shop-reveal-icon" id="shop-reveal-icon">🎩</div>
+                    <div class="shop-reveal-name" id="shop-reveal-name">Top Hat</div>
+                    <div class="shop-reveal-desc" id="shop-reveal-desc"></div>
+                    <button class="action-button" id="shop-reveal-ok"><span>Awesome!</span> 😻</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game entry point (ES module; Vite bundles js/ and Three.js from npm) -->
+    <script type="module" src="./js/game.js"></script>
 </body>
 </html>
