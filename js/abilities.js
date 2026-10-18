@@ -54,6 +54,7 @@ export class AbilityManager {
             // Activate before consuming so the bar keeps showing the timer of the last one
             this.activeBoosts[itemId] = item.duration;
             this.shop.consume(itemId);
+            if (item.effect === 'golden') g.mice.forEach(m => m.setGolden(true));
             sound.playPowerUp();
             g.showToast(`${item.icon} ${item.name.toUpperCase()}! (${item.duration}s)`);
         } else if (item.weapon === 'sneeze') {
@@ -83,6 +84,13 @@ export class AbilityManager {
             if (item && item.effect === 'speed') mult = Math.max(mult, item.value);
         }
         return mult;
+    }
+
+    goldenMiceActive() {
+        return Object.keys(this.activeBoosts).some(id => {
+            const item = this.shop.itemsById[id];
+            return item && item.effect === 'golden';
+        });
     }
 
     // Mice the player can currently see on screen (inside the camera's view)
@@ -164,6 +172,8 @@ export class AbilityManager {
                 delete this.activeBoosts[id];
                 const item = this.shop.itemsById[id];
                 if (item) g.showToast(`${item.name} wore off`);
+                // Mice turned golden by the boost go back to normal (born-golden mice stay golden)
+                if (item && item.effect === 'golden') g.mice.forEach(m => m.setGolden(false));
                 this.refreshBar();
             }
         }

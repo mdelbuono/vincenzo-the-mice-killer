@@ -78,6 +78,7 @@ export class Shop {
         // Points used to be called "kibbles"
         if (saved.kibbles !== undefined && saved.brokjes === undefined) data.brokjes = saved.kibbles;
         delete data.kibbles;
+        delete data.secretFound; // left over from the removed password easter egg
         return data;
     }
 
@@ -163,6 +164,7 @@ export class Shop {
             fur: parseInt(catItem.fur, 16),
             spots: parseInt(catItem.spots, 16),
             eyes: parseInt(catItem.eyes, 16),
+            pattern: catItem.pattern || 'spots',
             outfits: outfits,
             blaster: this.ownsWeapon('blaster')
         };

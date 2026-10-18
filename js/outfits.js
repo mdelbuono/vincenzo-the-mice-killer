@@ -70,6 +70,59 @@ const OUTFIT_BUILDERS = {
         return g;
     },
 
+    // Japanese samurai helmet (kabuto): lacquered dome, neck guard and golden horns
+    samuraiHelmet() {
+        const g = new THREE.Group();
+        const lacquer = new THREE.MeshStandardMaterial({ color: 0xb71c1c, roughness: 0.3, metalness: 0.2, side: THREE.DoubleSide });
+        const gold = new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.35, roughness: 0.3, emissive: 0x7a5c00, emissiveIntensity: 0.35, side: THREE.DoubleSide });
+
+        // Tall dome (covers the ears) with ridges and a golden knob on top
+        const domeGroup = new THREE.Group();
+        domeGroup.scale.y = 1.3;
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.45, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), lacquer);
+        domeGroup.add(dome);
+        const ridgeMat = new THREE.MeshStandardMaterial({ color: 0x2d1e1e, roughness: 0.4 });
+        for (let i = 0; i < 6; i++) {
+            const ridge = new THREE.Mesh(new THREE.TorusGeometry(0.452, 0.012, 4, 20, Math.PI), ridgeMat);
+            ridge.rotation.y = (i / 6) * Math.PI;
+            domeGroup.add(ridge);
+        }
+        g.add(domeGroup);
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), gold);
+        knob.position.y = 0.58;
+        g.add(knob);
+
+        // Flared neck guard around the back and sides (open at the front so the eyes stay visible)
+        const guard = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.6, 0.2, 20, 1, true, -Math.PI * 0.62, Math.PI * 1.24), lacquer);
+        guard.position.y = -0.08;
+        g.add(guard);
+        const guardTrim = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.015, 4, 24, Math.PI * 1.24), gold);
+        guardTrim.rotation.x = Math.PI / 2;
+        guardTrim.rotation.z = Math.PI * 0.5 - Math.PI * 0.62;
+        guardTrim.position.y = -0.18;
+        g.add(guardTrim);
+
+        // Small front visor
+        const visor = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.52, 0.05, 20, 1, true, Math.PI * 0.62, Math.PI * 0.76), lacquer);
+        visor.position.y = 0.0;
+        g.add(visor);
+
+        // Golden crest: round badge with two tall horns in a V (kuwagata)
+        const badge = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.03, 16), gold);
+        badge.rotation.x = Math.PI / 2;
+        badge.position.set(0, 0.16, -0.45);
+        g.add(badge);
+        [-1, 1].forEach(side => {
+            const horn = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.6, 0.03), gold);
+            horn.position.set(side * 0.17, 0.42, -0.45);
+            horn.rotation.z = -side * 0.45;
+            g.add(horn);
+        });
+
+        g.position.set(0, 0.14, 0.02);
+        return g;
+    },
+
     beard() {
         const g = new THREE.Group();
         const beardGeo = new THREE.ConeGeometry(0.2, 0.55, 12);

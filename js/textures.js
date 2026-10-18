@@ -307,6 +307,59 @@ export function createKitchenWallTexture() {
     return texture;
 }
 
+// 7. Bedroom Soft Carpet Texture
+export function createCarpetTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#3c4f7a';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Fluffy fibers
+    for (let i = 0; i < 9000; i++) {
+        const shade = Math.random();
+        ctx.fillStyle = shade > 0.5 ? 'rgba(120,140,200,0.18)' : 'rgba(20,30,60,0.18)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(4, 3);
+    return texture;
+}
+
+// 8. Bedroom Wallpaper Texture (lilac stripes with little stars)
+export function createBedroomWallTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    for (let x = 0; x < 512; x += 64) {
+        ctx.fillStyle = (x / 64) % 2 === 0 ? '#8e7cc3' : '#9d8dd0';
+        ctx.fillRect(x, 0, 64, 512);
+    }
+
+    ctx.fillStyle = 'rgba(255, 234, 167, 0.8)';
+    ctx.font = '22px sans-serif';
+    ctx.textAlign = 'center';
+    for (let y = 40; y < 512; y += 96) {
+        for (let x = 32; x < 512; x += 128) {
+            const offset = (y / 96) % 2 < 1 ? 0 : 64;
+            ctx.fillText('★', x + offset, y);
+        }
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(4, 2);
+    return texture;
+}
+
 export function createRugTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;

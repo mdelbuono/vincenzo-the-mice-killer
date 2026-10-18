@@ -1,6 +1,6 @@
 # Vincenzo The Mice Killer 🐾
 
-A 3D browser action game built with **Three.js**. Hunt pesky mice across 3 levels of a house as **Vincenzo**, a white cat with two red spots!
+A 3D browser action game built with **Three.js**. Hunt pesky mice across 5 levels of a house as **Vincenzo**, a white cat with two red spots!
 
 ## 📖 Background
 
@@ -42,7 +42,7 @@ In the repository settings on GitHub, **Pages → Build and deployment → Sourc
 - **C**: Switch camera view (Follow, Top-Down, First-Person)
 - **M**: Mute / Unmute sound
 - **P / Esc**: Pause game
-- **1 / 2 / 3**: Activate a boost bought in the shop (Zoomies, Double Brokjes, Triple Brokjes)
+- **1 / 2 / 3 / 4**: Activate a boost bought in the shop (Zoomies, Double Brokjes, Triple Brokjes, Golden Mice)
 - **E**: Pepper Sneeze (knocks out every mouse you can see on screen)
 - **F**: Fire the Brokjes Blaster
 - **Touch**: Virtual joystick & on-screen buttons on mobile/tablet (tap the power-up buttons on the left)
@@ -55,10 +55,10 @@ Several players can share the same computer: on the start screen, pick **Who's p
 
 ## 🛒 Brokjes Shop
 Click the **🛒 Shop** button (top-left) to spend the brokjes ("kibbles" in Dutch) you collect. Brokjes and purchases are saved in your browser, separately for each player.
-- **Cats**: play as Luna, Tigro, Nuvola, Biscotto or Bubblegum
-- **Boosts**: run faster, or earn 2x / 3x brokjes per mouse for 20 seconds
+- **Cats**: play as Luna, Tigro, Nuvola, Biscotto, Bubblegum, snow-white Rosa, black-and-white striped Ivar or the legendary striped Peppino
+- **Boosts**: run faster, or earn 2x / 3x brokjes per mouse for 20 seconds, or turn every mouse golden for 30 seconds
 - **Weapons**: Pepper Sneeze and the Brokjes Blaster (with pellet refills)
-- **Clothes**: hats, beards, sunglasses, bow ties and more (just for looks)
+- **Clothes**: hats (including a samurai helmet), beards, sunglasses, bow ties and more (just for looks)
 - **Surprise Box**: a random item from the shop!
 
 Items and prices are configured in [`public/shop.json`](public/shop.json).
@@ -68,6 +68,7 @@ Level settings are configured in [`public/levels.json`](public/levels.json), and
 - **Level 1: The Living Room**: Catch 10 mice in 3 minutes (3 concurrent mice)
 - **Level 2: The Attic**: Catch 15 mice in 2.5 minutes (5 faster concurrent mice)
 - **Level 3: The Basement**: Catch 20 mice in 2 minutes (6 agile swarm mice)
-- **Level 4: The Kitchen**: Catch 25 mice in 2 minutes (8 of the fastest mice yet, in a kitchen full of furniture)
+- **Level 4: The Kitchen**: Catch 25 mice in 2 minutes (8 very fast mice, in a kitchen full of furniture)
+- **Level 5: The Bedroom**: Catch 30 mice in 2 minutes (10 lightning-fast mice in a dark bedroom at night)
 
 See `PROJECT_CONTEXT.md` for detailed technical and design documentation.

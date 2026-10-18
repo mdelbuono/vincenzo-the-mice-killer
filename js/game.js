@@ -47,7 +47,8 @@ class VincenzoGame {
             1: { id: 1, name: 'Living Room', target: 10, duration: 180, time: 180, miceCount: 3, speedMult: 1.0, brokjesPerMouse: 10, completionBrokjes: 50, goldenMouseChance: 0.12, goldenMouseBrokjes: 50, clearIcon: '🎉 🛋️', clearTitle: 'Level 1 Cleared!', clearMsg: 'Living Room is clear! But mice are scurrying upstairs in the dusty Attic!', nextBtnText: 'Enter Level 2: The Attic (15 Mice)' },
             2: { id: 2, name: 'The Attic', target: 15, duration: 150, time: 150, miceCount: 5, speedMult: 1.2, brokjesPerMouse: 10, completionBrokjes: 100, goldenMouseChance: 0.12, goldenMouseBrokjes: 60, clearIcon: '📦 🌟', clearTitle: 'Level 2 Cleared!', clearMsg: 'The Attic is safe! But a massive infestation is swarming in the dark Basement!', nextBtnText: 'Enter Level 3: The Basement (20 Mice)' },
             3: { id: 3, name: 'The Basement', target: 20, duration: 120, time: 120, miceCount: 6, speedMult: 1.35, brokjesPerMouse: 10, completionBrokjes: 200, goldenMouseChance: 0.15, goldenMouseBrokjes: 80, clearIcon: '🔥 🛢️', clearTitle: 'Level 3 Cleared!', clearMsg: 'The Basement is quiet! But a hungry gang of mice has raided the Kitchen and is going after the cheese!', nextBtnText: 'Enter Level 4: The Kitchen (25 Mice)' },
-            4: { id: 4, name: 'The Kitchen', target: 25, duration: 120, time: 120, miceCount: 8, speedMult: 1.5, brokjesPerMouse: 10, completionBrokjes: 300, goldenMouseChance: 0.18, goldenMouseBrokjes: 100, clearIcon: '👑 🏆 🐱', clearTitle: 'GRAND CHAMPION VINCENZO!', clearMsg: 'All 4 levels conquered! 70 total mice caught! Vincenzo is the ultimate legendary mouse killer!', nextBtnText: 'Play Again from Level 1' }
+            4: { id: 4, name: 'The Kitchen', target: 25, duration: 120, time: 120, miceCount: 8, speedMult: 1.5, brokjesPerMouse: 10, completionBrokjes: 300, goldenMouseChance: 0.18, goldenMouseBrokjes: 100, clearIcon: '🧀 🍳', clearTitle: 'Level 4 Cleared!', clearMsg: "The Kitchen is safe! But it's bedtime and an army of mice is sneaking into the dark Bedroom!", nextBtnText: 'Enter Level 5: The Bedroom (30 Mice)' },
+            5: { id: 5, name: 'The Bedroom', target: 30, duration: 120, time: 120, miceCount: 10, speedMult: 1.65, brokjesPerMouse: 10, completionBrokjes: 400, goldenMouseChance: 0.2, goldenMouseBrokjes: 120, clearIcon: '👑 🏆 🐱', clearTitle: 'GRAND CHAMPION VINCENZO!', clearMsg: 'All 5 levels conquered! 100 total mice caught! Vincenzo is the ultimate legendary mouse killer!', nextBtnText: 'Play Again from Level 1' }
         };
 
         this.currentLevel = 1;
@@ -487,7 +488,10 @@ class VincenzoGame {
         const mouse = new Mouse(this.scene, this.room, speedMultiplier || cfg.speedMult, golden);
         this.mice.push(mouse);
         sound.playMouseSqueak();
-        if (golden) {
+        // While the Golden Mice boost is on, every new mouse arrives golden too (without the fanfare)
+        if (this.abilities.goldenMiceActive()) {
+            mouse.setGolden(true);
+        } else if (golden) {
             sound.playGoldenAppear();
             this.showToast('✨ A GOLDEN MOUSE APPEARED! ✨');
         }

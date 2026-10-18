@@ -10,6 +10,7 @@ export class Mouse {
         this.scene = scene;
         this.room = room;
         this.golden = golden;
+        this.bornGolden = golden; // golden by chance, not because of the Golden Mice boost
         this.mesh = new THREE.Group();
 
         this.position = new THREE.Vector3();
@@ -17,10 +18,8 @@ export class Mouse {
 
         this.rotationY = Math.random() * Math.PI * 2;
         this.state = 'ROAMING';
-        const goldenMult = golden ? GOLDEN_SPEED_MULT : 1.0;
-        this.speed = 4.2 * speedMultiplier * goldenMult;
-        this.fleeSpeed = 7.5 * speedMultiplier * goldenMult;
-        this.alertDistance = golden ? 9.0 : 6.5; // Golden mice notice the cat sooner
+        this.speedMultiplier = speedMultiplier;
+        this.applySpeeds();
         this.walkCycle = 0;
 
         this.wanderTarget = new THREE.Vector3();
@@ -59,10 +58,63 @@ export class Mouse {
         this.wanderTarget.set(0, 0, 0);
     }
 
+    applySpeeds() {
+        const goldenMult = this.golden ? GOLDEN_SPEED_MULT : 1.0;
+        this.speed = 4.2 * this.speedMultiplier * goldenMult;
+        this.fleeSpeed = 7.5 * this.speedMultiplier * goldenMult;
+        this.alertDistance = this.golden ? 9.0 : 6.5; // Golden mice notice the cat sooner
+    }
+
+    // Turns the mouse golden or back to grey (Golden Mice boost). Born-golden mice never turn grey.
+    setGolden(golden) {
+        if (!golden && this.bornGolden) return;
+        this.golden = golden;
+        this.applySpeeds();
+        this.applyFur();
+        if (golden && !this.halo) this.buildHalo();
+        if (this.halo) this.halo.visible = golden;
+    }
+
+    applyFur() {
+        const m = this.furMat;
+        if (this.golden) {
+            m.color.setHex(0xffd32a);
+            m.metalness = 0.5;
+            m.roughness = 0.25;
+            m.emissive.setHex(0xb8860b);
+            m.emissiveIntensity = 0.5;
+        } else {
+            m.color.setHex(0x7f8c8d);
+            m.metalness = 0;
+            m.roughness = 0.6;
+            m.emissive.setHex(0x000000);
+        }
+    }
+
+    // Golden mice wear a spinning sparkle halo
+    buildHalo() {
+        this.halo = new THREE.Group();
+        const ring = new THREE.Mesh(
+            new THREE.TorusGeometry(0.42, 0.03, 6, 24),
+            new THREE.MeshBasicMaterial({ color: 0xffd32a, transparent: true, opacity: 0.8 })
+        );
+        ring.rotation.x = Math.PI / 2;
+        this.halo.add(ring);
+        const sparkleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        for (let i = 0; i < 4; i++) {
+            const a = (i / 4) * Math.PI * 2;
+            const sparkle = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), sparkleMat);
+            sparkle.position.set(Math.cos(a) * 0.42, 0, Math.sin(a) * 0.42);
+            this.halo.add(sparkle);
+        }
+        this.halo.position.y = 0.45;
+        this.mesh.add(this.halo);
+    }
+
     buildModel() {
-        const mouseMat = this.golden
-            ? new THREE.MeshStandardMaterial({ color: 0xffd32a, metalness: 0.5, roughness: 0.25, emissive: 0xb8860b, emissiveIntensity: 0.5 })
-            : new THREE.MeshStandardMaterial({ color: 0x7f8c8d, roughness: 0.6 });
+        this.furMat = new THREE.MeshStandardMaterial();
+        this.applyFur();
+        const mouseMat = this.furMat;
         const pinkMat = new THREE.MeshStandardMaterial({ color: 0xffa8a8, roughness: 0.7 });
         const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
 
@@ -107,25 +159,7 @@ export class Mouse {
         this.tail.position.set(0, 0.16, 0.4);
         this.mesh.add(this.tail);
 
-        // Golden mice wear a spinning sparkle halo
-        if (this.golden) {
-            this.halo = new THREE.Group();
-            const ring = new THREE.Mesh(
-                new THREE.TorusGeometry(0.42, 0.03, 6, 24),
-                new THREE.MeshBasicMaterial({ color: 0xffd32a, transparent: true, opacity: 0.8 })
-            );
-            ring.rotation.x = Math.PI / 2;
-            this.halo.add(ring);
-            const sparkleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            for (let i = 0; i < 4; i++) {
-                const a = (i / 4) * Math.PI * 2;
-                const sparkle = new THREE.Mesh(new THREE.OctahedronGeometry(0.07), sparkleMat);
-                sparkle.position.set(Math.cos(a) * 0.42, 0, Math.sin(a) * 0.42);
-                this.halo.add(sparkle);
-            }
-            this.halo.position.y = 0.45;
-            this.mesh.add(this.halo);
-        }
+        if (this.golden) this.buildHalo();
 
         const exclamGroup = new THREE.Group();
         const exclamBar = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 0.08), new THREE.MeshBasicMaterial({ color: 0xff3838 }));

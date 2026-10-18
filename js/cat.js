@@ -8,6 +8,7 @@ export const DEFAULT_CAT_APPEARANCE = {
     fur: 0xffffff,
     spots: 0xd63031,
     eyes: 0x2ecc71,
+    pattern: 'spots', // 'spots' (two spots near the tail), 'stripes' (tabby stripes in the spots color) or 'plain'
     outfits: [],
     blaster: false
 };
@@ -51,10 +52,44 @@ export class Cat {
         this.buildModel();
     }
 
+    // Two spots on the back near the tail
+    addTorsoSpots(spotMat) {
+        // Red Spot 1 (Left back near tail)
+        const spot1Geo = new THREE.SphereGeometry(0.2, 12, 8);
+        spot1Geo.scale(1.0, 0.25, 1.2);
+        const spot1 = new THREE.Mesh(spot1Geo, spotMat);
+        spot1.position.set(-0.16, 0.33, 0.38);
+        spot1.rotation.set(-0.2, 0.15, 0.35);
+        this.bodyGroup.add(spot1);
+
+        // Red Spot 2 (Right back near tail)
+        const spot2Geo = new THREE.SphereGeometry(0.18, 12, 8);
+        spot2Geo.scale(1.1, 0.25, 1.0);
+        const spot2 = new THREE.Mesh(spot2Geo, spotMat);
+        spot2.position.set(0.15, 0.34, 0.46);
+        spot2.rotation.set(-0.25, -0.15, -0.35);
+        this.bodyGroup.add(spot2);
+    }
+
+    // Tabby stripes: half rings over the back that follow the shape of the torso
+    addTorsoStripes(stripeMat) {
+        const radiusX = 0.55 * 0.8;
+        const radiusY = 0.55 * 0.75;
+        const halfLength = 0.55 * 1.4;
+        [-0.4, -0.12, 0.16, 0.42].forEach(z => {
+            const r = radiusX * Math.sqrt(1 - (z / halfLength) ** 2) * 1.02;
+            const stripe = new THREE.Mesh(new THREE.TorusGeometry(r, 0.035, 6, 20, Math.PI * 1.3), stripeMat);
+            stripe.rotation.z = -Math.PI * 0.15;
+            stripe.scale.y = radiusY / radiusX;
+            stripe.position.z = z;
+            this.bodyGroup.add(stripe);
+        });
+    }
+
     buildModel() {
         const look = this.appearance;
         const whiteFur = new THREE.MeshStandardMaterial({ color: look.fur, roughness: 0.45 });
-        const redSpotMat = new THREE.MeshStandardMaterial({ color: look.spots, roughness: 0.5 }); // Two distinct spots
+        const redSpotMat = new THREE.MeshStandardMaterial({ color: look.spots, roughness: 0.5 }); // Spots or stripes
         const pinkMat = new THREE.MeshStandardMaterial({ color: 0xffb8b8, roughness: 0.7 });
         const eyeMat = new THREE.MeshStandardMaterial({ color: look.eyes, roughness: 0.1, emissive: look.eyes, emissiveIntensity: 0.3 });
         const collarMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.3 });
@@ -70,22 +105,11 @@ export class Cat {
         torso.castShadow = true;
         this.bodyGroup.add(torso);
 
-        // Two Red Spots at the back near the tail:
-        // Red Spot 1 (Left back near tail)
-        const spot1Geo = new THREE.SphereGeometry(0.2, 12, 8);
-        spot1Geo.scale(1.0, 0.25, 1.2);
-        const spot1 = new THREE.Mesh(spot1Geo, redSpotMat);
-        spot1.position.set(-0.16, 0.33, 0.38);
-        spot1.rotation.set(-0.2, 0.15, 0.35);
-        this.bodyGroup.add(spot1);
-
-        // Red Spot 2 (Right back near tail)
-        const spot2Geo = new THREE.SphereGeometry(0.18, 12, 8);
-        spot2Geo.scale(1.1, 0.25, 1.0);
-        const spot2 = new THREE.Mesh(spot2Geo, redSpotMat);
-        spot2.position.set(0.15, 0.34, 0.46);
-        spot2.rotation.set(-0.25, -0.15, -0.35);
-        this.bodyGroup.add(spot2);
+        if (look.pattern === 'stripes') {
+            this.addTorsoStripes(redSpotMat);
+        } else if (look.pattern !== 'plain') {
+            this.addTorsoSpots(redSpotMat);
+        }
 
         // White Head
         this.headGroup = new THREE.Group();
@@ -95,6 +119,18 @@ export class Cat {
         const head = new THREE.Mesh(headGeo, whiteFur);
         head.castShadow = true;
         this.headGroup.add(head);
+
+        // Three stripes on the forehead
+        if (look.pattern === 'stripes') {
+            [-0.13, 0, 0.13].forEach(x => {
+                const stripeGeo = new THREE.SphereGeometry(0.1, 10, 8);
+                stripeGeo.scale(0.35, 0.3, 1.5);
+                const stripe = new THREE.Mesh(stripeGeo, redSpotMat);
+                stripe.position.set(x, 0.37, -0.17);
+                stripe.rotation.x = 0.45;
+                this.headGroup.add(stripe);
+            });
+        }
 
         // White Snout
         const muzzleGeo = new THREE.SphereGeometry(0.2, 12, 10);
@@ -235,6 +271,13 @@ export class Cat {
             segMesh.position.set(0, 0.1, 0.1);
             segMesh.castShadow = true;
             segGroup.add(segMesh);
+
+            // Striped cats get a ring around each tail segment
+            if (look.pattern === 'stripes') {
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08 - s * 0.012, 0.025, 6, 14), redSpotMat);
+                ring.rotation.x = Math.PI / 2;
+                segMesh.add(ring);
+            }
 
             parent.add(segGroup);
             this.tailSegments.push(segGroup);

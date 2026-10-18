@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {
     createParquetTexture, createAtticFloorTexture, createBasementFloorTexture,
     createBasementWallTexture, createKitchenFloorTexture, createKitchenWallTexture,
+    createCarpetTexture, createBedroomWallTexture,
     createRugTexture, createTVCanvasTexture
 } from './textures.js';
 
@@ -182,6 +183,8 @@ export class LevelEnvironment {
             case 'basementWall':    return createBasementWallTexture();
             case 'kitchenFloor':    return createKitchenFloorTexture();
             case 'kitchenWall':     return createKitchenWallTexture();
+            case 'carpet':          return createCarpetTexture();
+            case 'bedroomWall':     return createBedroomWallTexture();
             default:
                 console.warn(`Unknown texture name: "${textureName}"`);
                 return null;
@@ -244,6 +247,34 @@ export class LevelEnvironment {
                 this.roomGroup.add(pipe2);
                 break;
             }
+            case 'bedroomWindow': {
+                // Night window on the back wall with a full moon
+                const frameMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+                const frame = new THREE.Mesh(new THREE.BoxGeometry(3.6, 3.0, 0.15), frameMat);
+                frame.position.set(...extra.position);
+                this.roomGroup.add(frame);
+                const sky = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.6), new THREE.MeshBasicMaterial({ color: 0x0c2461 }));
+                sky.position.set(extra.position[0], extra.position[1], extra.position[2] + 0.08);
+                this.roomGroup.add(sky);
+                const moon = new THREE.Mesh(new THREE.CircleGeometry(0.45, 20), new THREE.MeshBasicMaterial({ color: 0xfff6c8 }));
+                moon.position.set(extra.position[0] + 0.8, extra.position[1] + 0.55, extra.position[2] + 0.1);
+                this.roomGroup.add(moon);
+                const bar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.6, 0.05), frameMat);
+                bar.position.set(extra.position[0], extra.position[1], extra.position[2] + 0.12);
+                this.roomGroup.add(bar);
+                break;
+            }
+            case 'ceilingStars': {
+                // Glow-in-the-dark stickers on the ceiling
+                const starMat = new THREE.MeshBasicMaterial({ color: 0xc8f7c5 });
+                for (let i = 0; i < 40; i++) {
+                    const star = new THREE.Mesh(new THREE.CircleGeometry(0.12 + (i % 3) * 0.05, 5), starMat);
+                    star.rotation.x = Math.PI / 2;
+                    star.position.set(Math.sin(i * 12.9898) * 15, this.wallHeight - 0.02, Math.cos(i * 78.233) * 11);
+                    this.roomGroup.add(star);
+                }
+                break;
+            }
             default:
                 console.warn(`Unknown extra type: "${extra.type}"`);
         }
@@ -289,6 +320,13 @@ export class LevelEnvironment {
             case 'trashBin':         this.buildTrashBin(x, z); break;
             case 'catBowls':         this.buildCatBowls(x, z); break;
             case 'pendantLamp':      this.buildPendantLamp(x, y, z); break;
+            case 'bed':              this.buildBed(x, z); break;
+            case 'nightstand':       this.buildNightstand(x, z); break;
+            case 'wardrobe':         this.buildWardrobe(x, z); break;
+            case 'desk':             this.buildDesk(x, z); break;
+            case 'toyBox':           this.buildToyBox(x, z); break;
+            case 'beanBag':          this.buildBeanBag(x, z); break;
+            case 'toyBlocks':        this.buildToyBlocks(x, z); break;
             default:
                 console.warn(`Unknown prop builder: "${prop.builder}"`);
         }
@@ -934,5 +972,208 @@ export class LevelEnvironment {
         const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfff3c4 }));
         bulb.position.set(x, y - 0.3, z);
         this.roomGroup.add(bulb);
+    }
+
+    // Bedroom Props
+    buildBed(x, z) {
+        const bGroup = new THREE.Group();
+        bGroup.position.set(x, 0, z);
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.6 });
+
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(5.6, 1.0, 8.0), woodMat);
+        frame.position.y = 0.6;
+        frame.castShadow = true;
+        bGroup.add(frame);
+
+        const mattress = new THREE.Mesh(new THREE.BoxGeometry(5.3, 0.6, 7.7), new THREE.MeshStandardMaterial({ color: 0xf5f6fa, roughness: 0.9 }));
+        mattress.position.y = 1.4;
+        bGroup.add(mattress);
+
+        // Blanket covering the lower part of the bed, hanging over the sides
+        const blanket = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.7, 5.2), new THREE.MeshStandardMaterial({ color: 0x0abde3, roughness: 0.8 }));
+        blanket.position.set(0, 1.45, 1.3);
+        blanket.castShadow = true;
+        bGroup.add(blanket);
+        const blanketStripe = new THREE.Mesh(new THREE.BoxGeometry(5.62, 0.72, 0.4), new THREE.MeshStandardMaterial({ color: 0xfeca57, roughness: 0.8 }));
+        blanketStripe.position.set(0, 1.45, -0.9);
+        bGroup.add(blanketStripe);
+
+        // Pillow and a teddy bear
+        const pillow = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.45, 1.3), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }));
+        pillow.position.set(0, 1.9, -3.0);
+        bGroup.add(pillow);
+        const bearMat = new THREE.MeshStandardMaterial({ color: 0xc8956d, roughness: 0.9 });
+        const bearBody = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 10), bearMat);
+        bearBody.position.set(1.5, 2.3, -1.6);
+        bGroup.add(bearBody);
+        const bearHead = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), bearMat);
+        bearHead.position.set(1.5, 2.95, -1.6);
+        bGroup.add(bearHead);
+        [-0.22, 0.22].forEach(ex => {
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), bearMat);
+            ear.position.set(1.5 + ex, 3.22, -1.6);
+            bGroup.add(ear);
+        });
+
+        // Headboard against the wall
+        const headboard = new THREE.Mesh(new THREE.BoxGeometry(5.8, 3.4, 0.3), woodMat);
+        headboard.position.set(0, 1.7, -4.0);
+        headboard.castShadow = true;
+        bGroup.add(headboard);
+
+        this.roomGroup.add(bGroup);
+        this.addCollider(x, z, 5.8, 8.3);
+    }
+
+    buildNightstand(x, z) {
+        const nGroup = new THREE.Group();
+        nGroup.position.set(x, 0, z);
+        const stand = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 1.6), new THREE.MeshStandardMaterial({ color: 0xa1887f, roughness: 0.6 }));
+        stand.position.y = 0.9;
+        stand.castShadow = true;
+        nGroup.add(stand);
+
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.6 }));
+        knob.position.set(0, 1.2, 0.82);
+        nGroup.add(knob);
+
+        // Little bedside lamp with a glowing shade
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.25, 0.6, 12), new THREE.MeshStandardMaterial({ color: 0x2d3436 }));
+        base.position.y = 2.1;
+        nGroup.add(base);
+        const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 0.6, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xffeaa7, side: THREE.DoubleSide }));
+        shade.position.y = 2.6;
+        nGroup.add(shade);
+
+        this.roomGroup.add(nGroup);
+        this.addCollider(x, z, 2.0, 1.8);
+    }
+
+    buildWardrobe(x, z) {
+        const wGroup = new THREE.Group();
+        wGroup.position.set(x, 0, z);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(4.4, 6.5, 2.0), new THREE.MeshStandardMaterial({ color: 0xdfe6e9, roughness: 0.5 }));
+        body.position.y = 3.25;
+        body.castShadow = true;
+        wGroup.add(body);
+
+        // Two doors with a gap in the middle and long handles
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0xf5f6fa, roughness: 0.45 });
+        const handleMat = new THREE.MeshStandardMaterial({ color: 0x636e72, metalness: 0.7, roughness: 0.3 });
+        [-1, 1].forEach(side => {
+            const door = new THREE.Mesh(new THREE.BoxGeometry(2.05, 6.1, 0.08), doorMat);
+            door.position.set(side * 1.07, 3.25, 1.02);
+            wGroup.add(door);
+            const handle = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.9, 0.1), handleMat);
+            handle.position.set(side * 0.2, 3.4, 1.1);
+            wGroup.add(handle);
+        });
+
+        // Boxes stored on top
+        const boxMat = new THREE.MeshStandardMaterial({ color: 0xc8a165, roughness: 0.8 });
+        const topBox = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 1.4), boxMat);
+        topBox.position.set(-0.9, 6.95, 0);
+        wGroup.add(topBox);
+
+        this.roomGroup.add(wGroup);
+        this.addCollider(x, z, 4.6, 2.2);
+    }
+
+    buildDesk(x, z) {
+        const dGroup = new THREE.Group();
+        dGroup.position.set(x, 0, z);
+        const woodMat = new THREE.MeshStandardMaterial({ color: 0xffeaa7, roughness: 0.6 });
+        const top = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.18, 2.2), woodMat);
+        top.position.y = 2.3;
+        top.castShadow = true;
+        dGroup.add(top);
+        [[-2.1, -0.9], [2.1, -0.9], [-2.1, 0.9], [2.1, 0.9]].forEach(([lx, lz]) => {
+            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.3, 0.18), woodMat);
+            leg.position.set(lx, 1.15, lz);
+            dGroup.add(leg);
+        });
+
+        // Stack of school books, a pencil cup and a glowing laptop
+        const bookColors = [0xe17055, 0x00b894, 0x0984e3];
+        bookColors.forEach((color, i) => {
+            const book = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.16, 0.75), new THREE.MeshStandardMaterial({ color: color }));
+            book.position.set(-1.4, 2.48 + i * 0.16, 0);
+            book.rotation.y = i * 0.15;
+            dGroup.add(book);
+        });
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.4, 12), new THREE.MeshStandardMaterial({ color: 0xe84393 }));
+        cup.position.set(1.7, 2.6, -0.5);
+        dGroup.add(cup);
+        const laptopBase = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, 1.0), new THREE.MeshStandardMaterial({ color: 0xb2bec3, metalness: 0.5, roughness: 0.3 }));
+        laptopBase.position.set(0.3, 2.42, 0.1);
+        dGroup.add(laptopBase);
+        const screen = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.95, 0.05), new THREE.MeshBasicMaterial({ color: 0x74b9ff }));
+        screen.position.set(0.3, 2.9, -0.4);
+        screen.rotation.x = -0.2;
+        dGroup.add(screen);
+
+        // Desk chair in front
+        const chairMat = new THREE.MeshStandardMaterial({ color: 0x6c5ce7, roughness: 0.5 });
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.18, 1.3), chairMat);
+        seat.position.set(0, 1.4, 1.9);
+        seat.castShadow = true;
+        dGroup.add(seat);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 0.15), chairMat);
+        back.position.set(0, 2.15, 2.5);
+        dGroup.add(back);
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.3), new THREE.MeshStandardMaterial({ color: 0x2d3436, metalness: 0.6 }));
+        post.position.set(0, 0.7, 1.9);
+        dGroup.add(post);
+
+        this.roomGroup.add(dGroup);
+        // Desk and chair together
+        this.addCollider(x, z + 0.7, 4.8, 3.8);
+    }
+
+    buildToyBox(x, z) {
+        const tGroup = new THREE.Group();
+        tGroup.position.set(x, 0, z);
+        const box = new THREE.Mesh(new THREE.BoxGeometry(3.0, 1.6, 2.0), new THREE.MeshStandardMaterial({ color: 0xff6b6b, roughness: 0.6 }));
+        box.position.y = 0.8;
+        box.castShadow = true;
+        tGroup.add(box);
+
+        // Toys sticking out: a ball, a toy rocket and a block
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.4, 14, 12), new THREE.MeshStandardMaterial({ color: 0xfeca57, roughness: 0.4 }));
+        ball.position.set(-0.7, 1.75, 0.1);
+        tGroup.add(ball);
+        const rocket = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.1, 12), new THREE.MeshStandardMaterial({ color: 0xdfe6e9, roughness: 0.4 }));
+        rocket.position.set(0.5, 1.9, -0.2);
+        rocket.rotation.z = -0.3;
+        tGroup.add(rocket);
+        const block = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0x1dd1a1 }));
+        block.position.set(0.9, 1.75, 0.4);
+        block.rotation.y = 0.5;
+        tGroup.add(block);
+
+        this.roomGroup.add(tGroup);
+        this.addCollider(x, z, 3.2, 2.2);
+    }
+
+    buildBeanBag(x, z) {
+        const bagGeo = new THREE.SphereGeometry(1.3, 18, 14);
+        bagGeo.scale(1, 0.65, 1);
+        const bag = new THREE.Mesh(bagGeo, new THREE.MeshStandardMaterial({ color: 0xff9f43, roughness: 0.85 }));
+        bag.position.set(x, 0.75, z);
+        bag.castShadow = true;
+        this.roomGroup.add(bag);
+        this.addCollider(x, z, 2.4, 2.4);
+    }
+
+    // Toy blocks scattered on the floor (decoration, can be walked over)
+    buildToyBlocks(x, z) {
+        const colors = [0xff6b6b, 0x48dbfb, 0xfeca57, 0x1dd1a1, 0xa29bfe];
+        for (let i = 0; i < 7; i++) {
+            const block = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), new THREE.MeshStandardMaterial({ color: colors[i % colors.length] }));
+            const a = i * 2.4;
+            block.position.set(x + Math.cos(a) * (0.4 + i * 0.15), 0.175, z + Math.sin(a) * (0.4 + i * 0.15));
+            block.rotation.y = i * 0.7;
+            this.roomGroup.add(block);
+        }
     }
 }

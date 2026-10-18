@@ -15,116 +15,145 @@
     },
     {
       "id": "cat_luna", "category": "cats", "type": "cat",
-      "name": "Luna", "icon": "🐈‍⬛", "price": 300,
+      "name": "Luna", "icon": "🐈‍⬛", "price": 750,
       "description": "A sleek black cat with golden eyes. Silent as the night.",
       "fur": "0x2f3542", "spots": "0xdfe4ea", "eyes": "0xffd32a"
     },
     {
       "id": "cat_tigro", "category": "cats", "type": "cat",
-      "name": "Tigro", "icon": "🐯", "price": 400,
+      "name": "Tigro", "icon": "🐯", "price": 1000,
       "description": "A fiery orange tabby who loves the chase.",
       "fur": "0xff9f43", "spots": "0x8e3b00", "eyes": "0x2ecc71"
     },
     {
       "id": "cat_nuvola", "category": "cats", "type": "cat",
-      "name": "Nuvola", "icon": "☁️", "price": 500,
+      "name": "Nuvola", "icon": "☁️", "price": 1250,
       "description": "A fluffy grey cloud of a cat with icy blue eyes.",
       "fur": "0xa4b0be", "spots": "0x57606f", "eyes": "0x48dbfb"
     },
     {
       "id": "cat_biscotto", "category": "cats", "type": "cat",
-      "name": "Biscotto", "icon": "🍪", "price": 600,
+      "name": "Biscotto", "icon": "🍪", "price": 1500,
       "description": "A cream-colored cookie cat with chocolate spots.",
       "fur": "0xf5e6ca", "spots": "0x8b5a2b", "eyes": "0xff9f43"
     },
     {
       "id": "cat_bubblegum", "category": "cats", "type": "cat",
-      "name": "Bubblegum", "icon": "🩷", "price": 800,
+      "name": "Bubblegum", "icon": "🩷", "price": 2000,
       "description": "A bright pink legend with purple spots. Very rare!",
       "fur": "0xffb8e0", "spots": "0x9b59b6", "eyes": "0x3742fa"
+    },
+    {
+      "id": "cat_rosa", "category": "cats", "type": "cat",
+      "name": "Rosa", "icon": "🤍", "price": 2500,
+      "description": "A snow-white beauty without a single spot. Elegant and lightning fast.",
+      "fur": "0xffffff", "spots": "0xffffff", "eyes": "0x48dbfb", "pattern": "plain"
+    },
+    {
+      "id": "cat_ivar", "category": "cats", "type": "cat",
+      "name": "Ivar", "icon": "🦓", "price": 3000,
+      "description": "A mysterious black cat with bold white stripes. The terror of every mouse!",
+      "fur": "0x1e1e24", "spots": "0xffffff", "eyes": "0x2ed573", "pattern": "stripes"
+    },
+    {
+      "id": "cat_peppino", "category": "cats", "type": "cat",
+      "name": "Peppino", "icon": "🦁", "price": 4000,
+      "description": "A legendary orange cat with bright white stripes. The most expensive cat in the shop!",
+      "fur": "0xff7f11", "spots": "0xffffff", "eyes": "0x48dbfb", "pattern": "stripes"
     },
 
     {
       "id": "boost_speed", "category": "boosts", "type": "boost", "effect": "speed",
-      "name": "Zoomies", "icon": "⚡", "price": 60, "quantity": 1,
+      "name": "Zoomies", "icon": "⚡", "price": 150, "quantity": 1,
       "value": 1.6, "duration": 20, "key": "1",
       "description": "Run 1.6x faster for 20 seconds. Press 1 during the hunt."
     },
     {
       "id": "boost_brokjes2", "category": "boosts", "type": "boost", "effect": "brokjes",
-      "name": "Double Brokjes", "icon": "💰", "price": 80, "quantity": 1,
+      "name": "Double Brokjes", "icon": "💰", "price": 200, "quantity": 1,
       "value": 2, "duration": 20, "key": "2",
       "description": "Every mouse gives 2x brokjes for 20 seconds. Press 2 during the hunt."
     },
     {
       "id": "boost_brokjes3", "category": "boosts", "type": "boost", "effect": "brokjes",
-      "name": "Triple Brokjes", "icon": "💎", "price": 150, "quantity": 1,
+      "name": "Triple Brokjes", "icon": "💎", "price": 400, "quantity": 1,
       "value": 3, "duration": 20, "key": "3",
       "description": "Every mouse gives 3x brokjes for 20 seconds. Press 3 during the hunt."
+    },
+    {
+      "id": "boost_golden", "category": "boosts", "type": "boost", "effect": "golden",
+      "name": "Golden Mice", "icon": "✨", "price": 750, "quantity": 1,
+      "duration": 30, "key": "4",
+      "description": "Turns every mouse into a golden mouse for 30 seconds. Golden mice are faster, but worth lots of brokjes! Press 4 during the hunt."
     },
 
     {
       "id": "sneeze", "category": "weapons", "type": "ammo", "weapon": "sneeze",
-      "name": "Pepper Sneeze", "icon": "🤧", "price": 100, "quantity": 3,
+      "name": "Pepper Sneeze", "icon": "🤧", "price": 1000, "quantity": 3,
       "key": "e",
       "description": "3 mighty sneezes. Press E: every mouse you can see on screen is knocked out instantly!"
     },
     {
       "id": "blaster", "category": "weapons", "type": "unlock", "weapon": "blaster",
-      "name": "Brokjes Blaster", "icon": "🔫", "price": 250,
+      "name": "Brokjes Blaster", "icon": "🔫", "price": 750,
       "includes": { "blaster_ammo": 10 },
       "description": "A toy blaster that zaps mice from far away. Comes with 10 pellets. Press F to fire."
     },
     {
       "id": "blaster_ammo", "category": "weapons", "type": "ammo", "weapon": "blaster", "requires": "blaster",
-      "name": "Brokjes Pellets", "icon": "🟠", "price": 50, "quantity": 10, "key": "f",
+      "name": "Brokjes Pellets", "icon": "🟠", "price": 150, "quantity": 10, "key": "f",
       "description": "10 glowing pellets for the Brokjes Blaster."
     },
 
     {
       "id": "hat_top", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "topHat",
-      "name": "Top Hat", "icon": "🎩", "price": 120,
+      "name": "Top Hat", "icon": "🎩", "price": 300,
       "description": "Very fancy. Very gentlecat."
     },
     {
       "id": "hat_party", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "partyHat",
-      "name": "Party Hat", "icon": "🥳", "price": 80,
+      "name": "Party Hat", "icon": "🥳", "price": 200,
       "description": "Every catch is a celebration!"
     },
     {
       "id": "hat_crown", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "crown",
-      "name": "Golden Crown", "icon": "👑", "price": 300,
+      "name": "Golden Crown", "icon": "👑", "price": 800,
       "description": "For the true king (or queen) of the house."
     },
     {
+      "id": "hat_samurai", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "samuraiHelmet",
+      "name": "Samurai Helmet", "icon": "⚔️", "price": 600,
+      "description": "A shiny red samurai kabuto with golden horns. Honor to the mouse hunter!"
+    },
+    {
       "id": "face_beard", "category": "clothes", "type": "outfit", "slot": "face", "builder": "beard",
-      "name": "Wizard Beard", "icon": "🧔", "price": 100,
+      "name": "Wizard Beard", "icon": "🧔", "price": 250,
       "description": "A long white beard full of ancient mouse-hunting wisdom."
     },
     {
       "id": "face_moustache", "category": "clothes", "type": "outfit", "slot": "face", "builder": "moustache",
-      "name": "Moustache", "icon": "👨", "price": 60,
+      "name": "Moustache", "icon": "👨", "price": 150,
       "description": "A curly black moustache. Magnifico!"
     },
     {
       "id": "face_sunglasses", "category": "clothes", "type": "outfit", "slot": "face", "builder": "sunglasses",
-      "name": "Cool Shades", "icon": "😎", "price": 120,
+      "name": "Cool Shades", "icon": "😎", "price": 300,
       "description": "Too cool for the mice to handle."
     },
     {
       "id": "neck_bowtie", "category": "clothes", "type": "outfit", "slot": "neck", "builder": "bowTie",
-      "name": "Bow Tie", "icon": "🎀", "price": 70,
+      "name": "Bow Tie", "icon": "🎀", "price": 180,
       "description": "A smart blue bow tie for formal hunts."
     },
     {
       "id": "neck_scarf", "category": "clothes", "type": "outfit", "slot": "neck", "builder": "scarf",
-      "name": "Cozy Scarf", "icon": "🧣", "price": 90,
+      "name": "Cozy Scarf", "icon": "🧣", "price": 220,
       "description": "A warm striped scarf for the chilly attic."
     },
 
     {
       "id": "mystery_box", "category": "mystery", "type": "mystery",
-      "name": "Surprise Box", "icon": "🎁", "price": 120,
+      "name": "Surprise Box", "icon": "🎁", "price": 400,
       "description": "What's inside? Could be a cat, clothes, a weapon or a boost!"
     }
   ]

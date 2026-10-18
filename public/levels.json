@@ -69,10 +69,29 @@
     "completionBrokjes": 300,
     "goldenMouseChance": 0.18,
     "goldenMouseBrokjes": 100,
-    "description": "Catch 25 mice in 2 minutes (the fastest mice yet!).",
+    "description": "Catch 25 mice in 2 minutes (very fast mice!).",
+    "clearIcon": "🧀 🍳",
+    "clearTitle": "Level 4 Cleared!",
+    "clearMsg": "The Kitchen is safe! But it's bedtime and an army of mice is sneaking into the dark Bedroom!",
+    "nextBtnText": "Enter Level 5: The Bedroom (30 Mice)"
+  },
+  "5": {
+    "id": 5,
+    "name": "The Bedroom",
+    "environment": "environments/bedroom.json",
+    "target": 30,
+    "duration": 120,
+    "time": 120,
+    "miceCount": 10,
+    "speedMult": 1.65,
+    "brokjesPerMouse": 10,
+    "completionBrokjes": 400,
+    "goldenMouseChance": 0.2,
+    "goldenMouseBrokjes": 120,
+    "description": "Catch 30 mice in 2 minutes (10 lightning-fast mice in the dark!).",
     "clearIcon": "👑 🏆 🐱",
     "clearTitle": "GRAND CHAMPION VINCENZO!",
-    "clearMsg": "All 4 levels conquered! 70 total mice caught! Vincenzo is the ultimate legendary mouse killer!",
+    "clearMsg": "All 5 levels conquered! 100 total mice caught! Vincenzo is the ultimate legendary mouse killer!",
     "nextBtnText": "Play Again from Level 1"
   }
 }
