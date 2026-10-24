@@ -1,0 +1,40 @@
+{
+  "id": "backyard",
+  "name": "The Backyard",
+  "sky": "0x87ceeb",
+  "fogDensity": 0.006,
+  "lights": [
+    { "type": "hemisphere", "color": "0xbfe9ff", "groundColor": "0x4a8a32", "intensity": 0.6 },
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.15 },
+    {
+      "type": "directional",
+      "color": "0xfff1d0",
+      "intensity": 0.95,
+      "position": [20, 30, 10],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 22
+    }
+  ],
+  "floor": { "texture": "grass", "roughness": 0.95 },
+  "ceiling": null,
+  "walls": { "texture": "fence", "roughness": 0.85, "height": 3 },
+  "extras": [
+    { "type": "sun" },
+    { "type": "clouds" },
+    { "type": "distantTrees" }
+  ],
+  "props": [
+    { "builder": "bigTree",     "x": -10,   "z": -5 },
+    { "builder": "gardenShed",  "x": 11,    "z": -9.6 },
+    { "builder": "doghouse",    "x": -12,   "z": 7 },
+    { "builder": "sandbox",     "x": 5,     "z": 6 },
+    { "builder": "barbecue",    "x": 13,    "z": 4 },
+    { "builder": "flowerBed",   "x": 0,     "z": -11.2 },
+    { "builder": "flowerBed",   "x": -2,    "z": 11.5 },
+    { "builder": "birdBath",    "x": -3,    "z": 1 },
+    { "builder": "gardenGnome", "x": 9.5,   "z": 1 },
+    { "builder": "gardenGnome", "x": -14.5, "z": -1 },
+    { "builder": "trampoline",  "x": 4,     "z": -4 }
+  ]
+}

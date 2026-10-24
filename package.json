@@ -1,7 +1,7 @@
 {
   "name": "vincenzo-the-mice-killer",
   "version": "1.0.0",
-  "description": "A 3D browser game built with Three.js: hunt mice across 5 levels of a house as Vincenzo the cat.",
+  "description": "A 3D browser game built with Three.js: hunt mice across 10 levels and an endless mode as Vincenzo the cat.",
   "private": true,
   "type": "module",
   "license": "MIT",

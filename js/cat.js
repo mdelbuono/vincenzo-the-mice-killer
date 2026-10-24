@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { buildOutfit, buildBlasterModel } from './outfits.js';
+import { buildOutfit, buildBlasterModel, buildSquirterModel } from './outfits.js';
 import { createNameTagTexture } from './textures.js';
 
 // --- Vincenzo (The 3D Cat with Name Tag) ---
@@ -10,8 +10,14 @@ export const DEFAULT_CAT_APPEARANCE = {
     eyes: 0x2ecc71,
     pattern: 'spots', // 'spots' (two spots near the tail), 'stripes' (tabby stripes in the spots color) or 'plain'
     outfits: [],
-    blaster: false
+    blaster: false,
+    squirter: false
 };
+
+// Zero gravity (spaceship): the cat floats between the floor and this height
+const FLOAT_MAX_Y = 4.5;
+const FLOAT_SPEED = 4.0;      // up/down speed (Q / Z)
+const ZERO_G_FRICTION = 3.0;  // much less grip than on the floor, so the cat drifts
 
 export class Cat {
     constructor(scene, appearance = DEFAULT_CAT_APPEARANCE) {
@@ -43,7 +49,7 @@ export class Cat {
         this.scene.add(this.mesh);
     }
 
-    // Rebuilds the cat with a new look (fur/spot/eye colors, name, outfits, blaster)
+    // Rebuilds the cat with a new look (fur/spot/eye colors, name, outfits, blaster, squirter)
     setAppearance(appearance) {
         this.appearance = { ...DEFAULT_CAT_APPEARANCE, ...appearance };
         while (this.mesh.children.length > 0) {
@@ -228,6 +234,11 @@ export class Cat {
             blaster.position.set(0.36, 0.3, -0.1);
             this.bodyGroup.add(blaster);
         }
+        if (look.squirter) {
+            const squirter = buildSquirterModel();
+            squirter.position.set(-0.36, 0.3, -0.1);
+            this.bodyGroup.add(squirter);
+        }
 
         // White Legs
         this.legs = [];
@@ -313,6 +324,7 @@ export class Cat {
     }
 
     update(dt, input, room) {
+        const zeroG = room.zeroGravity;
         if (input.sprint && this.stamina > 10 && (input.forward || input.backward)) {
             this.isSprinting = true;
             this.stamina = Math.max(0, this.stamina - 30 * dt);
@@ -343,11 +355,20 @@ export class Cat {
         } else if (input.backward) {
             this.speed = Math.max(-topSpeed * 0.5, this.speed - this.acceleration * dt);
         } else {
+            const friction = zeroG ? ZERO_G_FRICTION : this.friction;
             if (this.speed > 0) {
-                this.speed = Math.max(0, this.speed - this.friction * dt);
+                this.speed = Math.max(0, this.speed - friction * dt);
             } else if (this.speed < 0) {
-                this.speed = Math.min(0, this.speed + this.friction * dt);
+                this.speed = Math.min(0, this.speed + friction * dt);
             }
+        }
+
+        // Floating up and down in zero gravity; on the floor everywhere else
+        if (zeroG) {
+            const lift = (input.up ? 1 : 0) - (input.down ? 1 : 0);
+            this.position.y = Math.max(0, Math.min(FLOAT_MAX_Y, this.position.y + lift * FLOAT_SPEED * dt));
+        } else {
+            this.position.y = 0;
         }
 
         const moveStep = this.speed * dt;
@@ -371,11 +392,21 @@ export class Cat {
             leapY = Math.sin((1 - this.pounceTimer / 0.35) * Math.PI) * 0.9;
         }
 
-        this.mesh.position.set(this.position.x, this.position.y + leapY, this.position.z);
+        const floatBob = zeroG ? Math.sin(Date.now() * 0.002) * 0.12 : 0;
+        this.mesh.position.set(this.position.x, this.position.y + leapY + floatBob, this.position.z);
         this.mesh.rotation.y = this.rotationY;
+        this.mesh.rotation.z = zeroG ? Math.sin(Date.now() * 0.0013) * 0.15 : 0;
 
         const isMoving = Math.abs(this.speed) > 0.1;
-        if (isMoving) {
+        if (zeroG) {
+            // Paws paddling slowly in the air
+            const paddle = Math.sin(Date.now() * 0.004) * 0.5;
+            this.legs[0].group.rotation.x = -0.6 + paddle;
+            this.legs[1].group.rotation.x = -0.6 - paddle;
+            this.legs[2].group.rotation.x = 0.6 - paddle;
+            this.legs[3].group.rotation.x = 0.6 + paddle;
+            this.bodyGroup.position.y = 0.55;
+        } else if (isMoving) {
             this.walkCycle += dt * this.speed * 4.5;
             const swing = Math.sin(this.walkCycle) * 0.6;
 

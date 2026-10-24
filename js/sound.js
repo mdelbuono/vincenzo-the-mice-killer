@@ -247,6 +247,78 @@ export class SoundEngine {
         });
     }
 
+    // Short burst of filtered white noise (used by the splash and the thud of a yarn ball)
+    playNoise(duration, freqFrom, freqTo, volume, delay = 0) {
+        const t = this.ctx.currentTime + delay;
+        const len = Math.floor(this.ctx.sampleRate * duration);
+        const buffer = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(freqFrom, t);
+        filter.frequency.exponentialRampToValueAtTime(freqTo, t + duration);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(volume, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+        noise.start(t);
+        noise.stop(t + duration + 0.02);
+    }
+
+    // Yarn ball: a whoosh, then a soft thud when it lands
+    playThrow() {
+        if (!this.ctx || this.muted) return;
+        this.playNoise(0.35, 600, 2400, 0.25);
+        this.playNoise(0.2, 300, 120, 0.5, 0.55);
+    }
+
+    // Water squirter: hissy splash
+    playSplash() {
+        if (!this.ctx || this.muted) return;
+        this.playNoise(0.45, 4000, 900, 0.4);
+    }
+
+    // Mouse trap: metallic snap
+    playTrapSnap() {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(900, t);
+        osc.frequency.exponentialRampToValueAtTime(90, t + 0.08);
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.11);
+        this.playNoise(0.06, 3000, 1500, 0.3);
+    }
+
+    // Endless mode: walking through a door into another room
+    playDoor() {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        [392, 523.25].forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, t + idx * 0.12);
+            gain.gain.setValueAtTime(0.22, t + idx * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.12 + 0.3);
+            osc.connect(gain);
+            gain.connect(this.sfxGain);
+            osc.start(t + idx * 0.12);
+            osc.stop(t + idx * 0.12 + 0.32);
+        });
+    }
+
     startBackgroundMusic() {
         if (this.musicInterval) return;
         const chords = [

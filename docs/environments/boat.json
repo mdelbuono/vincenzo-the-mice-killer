@@ -1,0 +1,43 @@
+{
+  "id": "boat",
+  "name": "The Boat",
+  "sky": "0x74b9ff",
+  "fogColor": "0xbfe9ff",
+  "fogDensity": 0.007,
+  "lights": [
+    { "type": "hemisphere", "color": "0xdff9fb", "groundColor": "0x0a3d62", "intensity": 0.6 },
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.15 },
+    {
+      "type": "directional",
+      "color": "0xfff1d0",
+      "intensity": 1.0,
+      "position": [18, 30, 12],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 20
+    }
+  ],
+  "floor": { "texture": "deck", "roughness": 0.7 },
+  "ceiling": null,
+  "walls": { "texture": "hull", "roughness": 0.5, "height": 1.6 },
+  "extras": [
+    { "type": "sea" },
+    { "type": "seagulls" },
+    { "type": "lifebuoys" }
+  ],
+  "props": [
+    { "builder": "captainCabin",  "x": 0,     "z": -10.6 },
+    { "builder": "shipWheel",     "x": 0,     "z": -7.4 },
+    { "builder": "mast",          "x": 0,     "z": 1 },
+    { "builder": "cannon",        "x": -14.2, "z": -4, "rotY": 3.1416 },
+    { "builder": "cannon",        "x": -14.2, "z": 4,  "rotY": 3.1416 },
+    { "builder": "cannon",        "x": 14.2,  "z": -4, "rotY": 0 },
+    { "builder": "cannon",        "x": 14.2,  "z": 4,  "rotY": 0 },
+    { "builder": "ropeCoil",      "x": -7,    "z": 7 },
+    { "builder": "ropeCoil",      "x": 9,     "z": -7 },
+    { "builder": "treasureChest", "x": 6,     "z": 8 },
+    { "builder": "barrelStack",   "x": -12,   "z": -10 },
+    { "builder": "barrelStack",   "x": 12,    "z": 10 },
+    { "builder": "anchor",        "x": -4,    "z": 10.5 }
+  ]
+}

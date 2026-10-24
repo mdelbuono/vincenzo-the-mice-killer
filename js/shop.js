@@ -56,7 +56,8 @@ export class Shop {
             owned: ['cat_vincenzo'],
             inventory: {},
             selectedCat: 'cat_vincenzo',
-            equipped: { hat: null, face: null, neck: null }
+            equipped: { hat: null, face: null, neck: null, back: null },
+            nextLevel: 1 // first campaign level not completed yet
         };
     }
 
@@ -102,6 +103,13 @@ export class Shop {
         this.persist();
         if (this.walletEl) this.walletEl.textContent = this.data.brokjes;
         if (this.callbacks.onWalletChange) this.callbacks.onWalletChange(this.data.brokjes);
+    }
+
+    // Campaign progress: the level the player continues from
+    get nextLevel() { return this.data.nextLevel; }
+    set nextLevel(level) {
+        this.data.nextLevel = level;
+        this.persist();
     }
 
     isOwned(id) { return this.data.owned.includes(id); }
@@ -166,7 +174,8 @@ export class Shop {
             eyes: parseInt(catItem.eyes, 16),
             pattern: catItem.pattern || 'spots',
             outfits: outfits,
-            blaster: this.ownsWeapon('blaster')
+            blaster: this.ownsWeapon('blaster'),
+            squirter: this.ownsWeapon('squirter')
         };
     }
 

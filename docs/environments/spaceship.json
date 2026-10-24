@@ -1,0 +1,45 @@
+{
+  "id": "spaceship",
+  "name": "The Spaceship",
+  "zeroGravity": true,
+  "sky": "0x05050f",
+  "fogDensity": 0.012,
+  "lights": [
+    { "type": "ambient", "color": "0x9aa5ff", "intensity": 0.45 },
+    {
+      "type": "directional",
+      "color": "0xc7ecee",
+      "intensity": 0.4,
+      "position": [5, 14, 8],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 20
+    },
+    { "type": "point", "color": "0x00d2d3", "intensity": 1.4, "distance": 18, "position": [0, 4, 0] },
+    { "type": "point", "color": "0xe056fd", "intensity": 0.7, "distance": 14, "position": [-11, 5, 8] },
+    { "type": "point", "color": "0xffffff", "intensity": 0.6, "distance": 22, "position": [0, 7.5, -6] }
+  ],
+  "floor": { "texture": "spaceFloor", "roughness": 0.4, "metalness": 0.4 },
+  "ceiling": { "color": "0x2f3640", "roughness": 0.6 },
+  "walls": { "texture": "spaceWall", "roughness": 0.4 },
+  "extras": [
+    { "type": "spaceWindows" },
+    { "type": "ceilingPanels" }
+  ],
+  "props": [
+    { "builder": "controlConsole", "x": 0,     "z": -11 },
+    { "builder": "cryoPod",        "x": -14.5, "z": -9 },
+    { "builder": "cryoPod",        "x": -14.5, "z": -5.5 },
+    { "builder": "cryoPod",        "x": -14.5, "z": -2 },
+    { "builder": "reactorCore",    "x": 0,     "z": 0 },
+    { "builder": "floatingCrate",  "x": 6,     "y": 2.5, "z": -5 },
+    { "builder": "floatingCrate",  "x": -7,    "y": 1.5, "z": 5 },
+    { "builder": "floatingCrate",  "x": 9,     "y": 3.5, "z": 6 },
+    { "builder": "floatingCrate",  "x": -6,    "y": 3,   "z": -6 },
+    { "builder": "floatingCrate",  "x": 12,    "y": 1.5, "z": -1 },
+    { "builder": "spaceRobot",     "x": 8,     "z": 1 },
+    { "builder": "plantPod",       "x": -10,   "z": 10.5 },
+    { "builder": "spaceSuitRack",  "x": 14.5,  "z": -9 },
+    { "builder": "spaceSuitRack",  "x": 14.5,  "z": -6.5 }
+  ]
+}

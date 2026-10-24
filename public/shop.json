@@ -58,8 +58,68 @@
     {
       "id": "cat_peppino", "category": "cats", "type": "cat",
       "name": "Peppino", "icon": "🦁", "price": 4000,
-      "description": "A legendary orange cat with bright white stripes. The most expensive cat in the shop!",
+      "description": "A legendary orange cat with bright white stripes. The pride of every alley!",
       "fur": "0xff7f11", "spots": "0xffffff", "eyes": "0x48dbfb", "pattern": "stripes"
+    },
+    {
+      "id": "cat_mirtillo", "category": "cats", "type": "cat",
+      "name": "Mirtillo", "icon": "🫐", "price": 2200,
+      "description": "A blueberry-blue cat with dark navy spots and golden eyes.",
+      "fur": "0x6c7a9c", "spots": "0x2f3b5c", "eyes": "0xffd32a"
+    },
+    {
+      "id": "cat_caramella", "category": "cats", "type": "cat",
+      "name": "Caramella", "icon": "🍬", "price": 2400,
+      "description": "A sweet caramel cat with creamy white spots.",
+      "fur": "0xd99a5b", "spots": "0xfff3e0", "eyes": "0x2ecc71"
+    },
+    {
+      "id": "cat_ombra", "category": "cats", "type": "cat",
+      "name": "Ombra", "icon": "🌑", "price": 2800,
+      "description": "A smoky shadow cat without a single spot. Mice never see her coming!",
+      "fur": "0x3b3b45", "spots": "0x3b3b45", "eyes": "0xff4757", "pattern": "plain"
+    },
+    {
+      "id": "cat_pistacchio", "category": "cats", "type": "cat",
+      "name": "Pistacchio", "icon": "🥜", "price": 3200,
+      "description": "A pistachio-green cat with dark green stripes. Totally unique!",
+      "fur": "0xb8e0a0", "spots": "0x6a994e", "eyes": "0x8e44ad", "pattern": "stripes"
+    },
+    {
+      "id": "cat_fulmine", "category": "cats", "type": "cat",
+      "name": "Fulmine", "icon": "⚡", "price": 3600,
+      "description": "A lightning-yellow cat with black stripes. Fast as a thunderbolt!",
+      "fur": "0xffe066", "spots": "0x2d3436", "eyes": "0x48dbfb", "pattern": "stripes"
+    },
+    {
+      "id": "cat_nebbia", "category": "cats", "type": "cat",
+      "name": "Nebbia", "icon": "🌫️", "price": 4200,
+      "description": "A misty silver cat with soft grey stripes and lilac eyes.",
+      "fur": "0xdfe6e9", "spots": "0x95a5a6", "eyes": "0xa29bfe", "pattern": "stripes"
+    },
+    {
+      "id": "cat_marshmallow", "category": "cats", "type": "cat",
+      "name": "Marshmallow", "icon": "🍡", "price": 4800,
+      "description": "A fluffy pastel-pink cat with sky-blue spots.",
+      "fur": "0xfff0f6", "spots": "0x74b9ff", "eyes": "0xfd79a8"
+    },
+    {
+      "id": "cat_cosmo", "category": "cats", "type": "cat",
+      "name": "Cosmo", "icon": "🌌", "price": 5500,
+      "description": "A deep-space purple cat with starry spots. Made for the spaceship!",
+      "fur": "0x2c2c54", "spots": "0xa29bfe", "eyes": "0x00d2d3"
+    },
+    {
+      "id": "cat_lava", "category": "cats", "type": "cat",
+      "name": "Lava", "icon": "🌋", "price": 6500,
+      "description": "A volcanic black cat with glowing orange stripes. Too hot to handle!",
+      "fur": "0x2d1b1b", "spots": "0xff4500", "eyes": "0xffa502", "pattern": "stripes"
+    },
+    {
+      "id": "cat_oro", "category": "cats", "type": "cat",
+      "name": "Oro", "icon": "🏆", "price": 8000,
+      "description": "The legendary golden cat, shining like a golden mouse. The most expensive cat in the shop!",
+      "fur": "0xf1c40f", "spots": "0xf1c40f", "eyes": "0x2ed573", "pattern": "plain"
     },
 
     {
@@ -86,6 +146,36 @@
       "duration": 30, "key": "4",
       "description": "Turns every mouse into a golden mouse for 30 seconds. Golden mice are faster, but worth lots of brokjes! Press 4 during the hunt."
     },
+    {
+      "id": "boost_lucky", "category": "boosts", "type": "boost", "effect": "lucky",
+      "name": "Lucky Clover", "icon": "🍀", "price": 600, "quantity": 1, "value": 0.6, "duration": 25, "key": "5",
+      "description": "For 25 seconds, new mice are very often golden (up to 3 at a time). Press 5 during the hunt."
+    },
+    {
+      "id": "boost_magnet", "category": "boosts", "type": "boost", "effect": "reach",
+      "name": "Magnet Paws", "icon": "🧲", "price": 450, "quantity": 1, "value": 1.8, "duration": 20, "key": "6",
+      "description": "Catch mice from almost twice as far away for 20 seconds. Press 6 during the hunt."
+    },
+    {
+      "id": "boost_sleepy", "category": "boosts", "type": "boost", "effect": "slowMice",
+      "name": "Sleepy Mice", "icon": "😴", "price": 400, "quantity": 1, "value": 0.45, "duration": 20, "key": "7",
+      "description": "All mice get sleepy and move at less than half speed for 20 seconds. Press 7 during the hunt."
+    },
+    {
+      "id": "boost_cheese", "category": "boosts", "type": "boost", "effect": "calm",
+      "name": "Cheese Lure", "icon": "🧀", "price": 500, "quantity": 1, "duration": 15, "key": "8",
+      "description": "The mice are so busy sniffing cheese that they don't run away from you for 15 seconds. Press 8 during the hunt."
+    },
+    {
+      "id": "boost_time", "category": "boosts", "type": "boost", "effect": "time",
+      "name": "Extra Time", "icon": "⏰", "price": 350, "quantity": 1, "value": 30, "key": "9",
+      "description": "Adds 30 seconds to the hunt clock right away. Press 9 during a level (not needed in endless mode)."
+    },
+    {
+      "id": "boost_party", "category": "boosts", "type": "boost", "effect": "moreMice",
+      "name": "Mouse Party", "icon": "🎉", "price": 550, "quantity": 1, "value": 4, "duration": 25, "key": "0",
+      "description": "4 extra mice join the room for 25 seconds: more mice, more brokjes! Press 0 during the hunt."
+    },
 
     {
       "id": "sneeze", "category": "weapons", "type": "ammo", "weapon": "sneeze",
@@ -103,6 +193,27 @@
       "id": "blaster_ammo", "category": "weapons", "type": "ammo", "weapon": "blaster", "requires": "blaster",
       "name": "Brokjes Pellets", "icon": "🟠", "price": 150, "quantity": 10, "key": "f",
       "description": "10 glowing pellets for the Brokjes Blaster."
+    },
+    {
+      "id": "yarn_bomb", "category": "weapons", "type": "ammo", "weapon": "yarn",
+      "name": "Yarn Ball Bomb", "icon": "🧶", "price": 900, "quantity": 3, "key": "g",
+      "description": "3 bouncy yarn balls. Press G to throw one ahead: every mouse near where it lands gets tangled up!"
+    },
+    {
+      "id": "mouse_traps", "category": "weapons", "type": "ammo", "weapon": "trap",
+      "name": "Cheesy Mouse Traps", "icon": "🪤", "price": 600, "quantity": 5, "key": "t",
+      "description": "5 traps with cheese. Press T to put one down: nearby mice come sniffing and get caught!"
+    },
+    {
+      "id": "squirter", "category": "weapons", "type": "unlock", "weapon": "squirter",
+      "name": "Super Squirter", "icon": "💦", "price": 1500,
+      "includes": { "squirter_ammo": 15 },
+      "description": "A water gun that sprays a wide splash in front of you and soaks every mouse it hits. Comes with 15 squirts. Press R to spray."
+    },
+    {
+      "id": "squirter_ammo", "category": "weapons", "type": "ammo", "weapon": "squirter", "requires": "squirter",
+      "name": "Water Refill", "icon": "💧", "price": 250, "quantity": 15, "key": "r",
+      "description": "15 squirts for the Super Squirter."
     },
 
     {
@@ -149,6 +260,81 @@
       "id": "neck_scarf", "category": "clothes", "type": "outfit", "slot": "neck", "builder": "scarf",
       "name": "Cozy Scarf", "icon": "🧣", "price": 220,
       "description": "A warm striped scarf for the chilly attic."
+    },
+    {
+      "id": "hat_cowboy", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "cowboyHat",
+      "name": "Cowboy Hat", "icon": "🤠", "price": 400,
+      "description": "Yee-haw! The sheriff of mouse town."
+    },
+    {
+      "id": "hat_pirate", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "pirateHat",
+      "name": "Pirate Hat", "icon": "🏴‍☠️", "price": 500,
+      "description": "Arrr! Perfect for hunting mice on the boat."
+    },
+    {
+      "id": "hat_wizard", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "wizardHat",
+      "name": "Wizard Hat", "icon": "🧙", "price": 650,
+      "description": "A starry hat full of mouse-catching magic."
+    },
+    {
+      "id": "hat_chef", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "chefHat",
+      "name": "Chef Hat", "icon": "👨‍🍳", "price": 350,
+      "description": "The master chef of the kitchen (mice not on the menu... or are they?)."
+    },
+    {
+      "id": "hat_viking", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "vikingHelmet",
+      "name": "Viking Helmet", "icon": "🪖", "price": 700,
+      "description": "A shiny helmet with big horns for a brave warrior cat."
+    },
+    {
+      "id": "hat_propeller", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "propellerCap",
+      "name": "Propeller Cap", "icon": "🧢", "price": 450,
+      "description": "A rainbow beanie with a spinning propeller on top."
+    },
+    {
+      "id": "hat_astronaut", "category": "clothes", "type": "outfit", "slot": "hat", "builder": "astronautHelmet",
+      "name": "Space Helmet", "icon": "👨‍🚀", "price": 1200,
+      "description": "A see-through space helmet. Ready for the spaceship!"
+    },
+    {
+      "id": "face_monocle", "category": "clothes", "type": "outfit", "slot": "face", "builder": "monocle",
+      "name": "Golden Monocle", "icon": "🧐", "price": 350,
+      "description": "Very distinguished. Very detective."
+    },
+    {
+      "id": "face_eyepatch", "category": "clothes", "type": "outfit", "slot": "face", "builder": "eyePatch",
+      "name": "Pirate Eye Patch", "icon": "🏴", "price": 250,
+      "description": "One eye is enough to spot a mouse."
+    },
+    {
+      "id": "face_clownnose", "category": "clothes", "type": "outfit", "slot": "face", "builder": "clownNose",
+      "name": "Clown Nose", "icon": "🤡", "price": 150,
+      "description": "Honk honk! The mice will laugh themselves silly."
+    },
+    {
+      "id": "face_hearts", "category": "clothes", "type": "outfit", "slot": "face", "builder": "heartGlasses",
+      "name": "Heart Glasses", "icon": "😍", "price": 400,
+      "description": "Pink heart-shaped glasses. Love at first sight!"
+    },
+    {
+      "id": "neck_medal", "category": "clothes", "type": "outfit", "slot": "neck", "builder": "goldMedal",
+      "name": "Gold Medal", "icon": "🥇", "price": 900,
+      "description": "For the champion mouse hunter."
+    },
+    {
+      "id": "neck_bandana", "category": "clothes", "type": "outfit", "slot": "neck", "builder": "bandana",
+      "name": "Bandana", "icon": "🧣", "price": 250,
+      "description": "A red polka-dot bandana, cowboy style."
+    },
+    {
+      "id": "back_cape", "category": "clothes", "type": "outfit", "slot": "back", "builder": "superCape",
+      "name": "Super Cape", "icon": "🦸", "price": 800,
+      "description": "A red superhero cape. Super-Cat to the rescue!"
+    },
+    {
+      "id": "back_wings", "category": "clothes", "type": "outfit", "slot": "back", "builder": "butterflyWings",
+      "name": "Butterfly Wings", "icon": "🦋", "price": 1000,
+      "description": "Sparkly purple wings. Can't really fly, but look amazing."
     },
 
     {

@@ -1,0 +1,42 @@
+{
+  "id": "supermarket",
+  "name": "The Supermarket",
+  "lights": [
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.6 },
+    {
+      "type": "directional",
+      "color": "0xffffff",
+      "intensity": 0.5,
+      "position": [0, 14, 6],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 20
+    },
+    { "type": "point", "color": "0xf8fbff", "intensity": 0.6, "distance": 20, "position": [-8, 7, 0] },
+    { "type": "point", "color": "0xf8fbff", "intensity": 0.6, "distance": 20, "position": [8, 7, 0] }
+  ],
+  "floor": { "texture": "supermarketFloor", "roughness": 0.25, "metalness": 0.05 },
+  "ceiling": { "color": "0xf5f6fa", "roughness": 0.9 },
+  "walls": { "texture": "supermarketWall", "roughness": 0.6 },
+  "extras": [
+    { "type": "fluorescentLights" }
+  ],
+  "props": [
+    { "builder": "dairyFridge",   "x": -5,    "z": -12 },
+    { "builder": "groceryShelf",  "x": -8,    "z": -6.5 },
+    { "builder": "groceryShelf",  "x": -8,    "z": -2 },
+    { "builder": "groceryShelf",  "x": -8,    "z": 2.5 },
+    { "builder": "groceryShelf",  "x": 8,     "z": -6.5 },
+    { "builder": "groceryShelf",  "x": 8,     "z": -2 },
+    { "builder": "groceryShelf",  "x": 8,     "z": 2.5 },
+    { "builder": "cheeseDisplay", "x": 0,     "z": -2 },
+    { "builder": "checkout",      "x": -8,    "z": 9.5 },
+    { "builder": "checkout",      "x": 0,     "z": 9.5 },
+    { "builder": "freezer",       "x": 12,    "z": 10.5 },
+    { "builder": "fruitStand",    "x": 14.5,  "z": -9.5 },
+    { "builder": "canPyramid",    "x": 6,     "z": -10.5 },
+    { "builder": "shoppingCart",  "x": 3,     "z": 6,   "rotY": 0.4 },
+    { "builder": "shoppingCart",  "x": -13.5, "z": 7,   "rotY": 1.6 },
+    { "builder": "shoppingCart",  "x": 14,    "z": 4,   "rotY": -0.3 }
+  ]
+}

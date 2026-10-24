@@ -387,6 +387,19 @@
             align-self: flex-end;
         }
 
+        .touch-btn.float-btn {
+            background: rgba(72, 219, 251, 0.85);
+            width: 58px;
+            height: 58px;
+            font-size: 11px;
+            align-self: flex-end;
+        }
+
+        /* Float up/down controls only exist in zero gravity (spaceship) */
+        body:not(.zero-gravity) .float-only {
+            display: none !important;
+        }
+
         /* Overlays (Start, Victory, Game Over, Pause) */
         .overlay-screen {
             position: absolute;
@@ -525,6 +538,41 @@
 
         .action-button:active {
             transform: translateY(1px);
+        }
+
+        .action-button:disabled {
+            opacity: 0.4;
+            cursor: default;
+            transform: none;
+        }
+
+        /* Start screen: campaign progress and the two game modes */
+        .start-progress {
+            font-size: 15px;
+            color: #d2dae2;
+            margin-bottom: 14px;
+        }
+
+        .start-progress strong {
+            color: #ffd32a;
+        }
+
+        .mode-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .action-button.endless-button {
+            background: linear-gradient(135deg, #48dbfb, #6c5ce7);
+            box-shadow: 0 8px 25px rgba(108, 92, 231, 0.5);
+        }
+
+        .action-button.endless-button:hover {
+            background: linear-gradient(135deg, #0abde3, #5f27cd);
+            box-shadow: 0 12px 30px rgba(108, 92, 231, 0.7);
         }
 
         .secondary-btn {

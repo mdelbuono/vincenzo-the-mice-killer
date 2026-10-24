@@ -4,6 +4,15 @@ import { createCatchPromptTexture } from './textures.js';
 // --- The Mice (Roam in Room, Level Difficulty Speed Scaling) ---
 // Golden mice are rare: faster, more alert, and worth more brokjes.
 const GOLDEN_SPEED_MULT = 1.5;
+const CATCH_RADIUS = 3.2;
+
+// Zero gravity (spaceship): mice float between these heights
+const FLOAT_MIN_Y = 0.3;
+const FLOAT_MAX_Y = 4.2;
+
+function randomFloatHeight() {
+    return FLOAT_MIN_Y + Math.random() * (FLOAT_MAX_Y - FLOAT_MIN_Y);
+}
 
 export class Mouse {
     constructor(scene, room, speedMultiplier = 1.0, golden = false) {
@@ -37,7 +46,7 @@ export class Mouse {
             const rx = (Math.random() - 0.5) * boundX * 2;
             const rz = (Math.random() - 0.5) * boundZ * 2;
             if (!this.room.checkCollision(rx, rz, 0.5)) {
-                this.position.set(rx, 0, rz);
+                this.position.set(rx, this.room.zeroGravity ? randomFloatHeight() : 0, rz);
                 return;
             }
         }
@@ -51,11 +60,18 @@ export class Mouse {
             const tx = (Math.random() - 0.5) * boundX * 2;
             const tz = (Math.random() - 0.5) * boundZ * 2;
             if (!this.room.checkCollision(tx, tz, 0.6)) {
-                this.wanderTarget.set(tx, 0, tz);
+                this.wanderTarget.set(tx, this.room.zeroGravity ? randomFloatHeight() : 0, tz);
                 return;
             }
         }
         this.wanderTarget.set(0, 0, 0);
+    }
+
+    // Makes a roaming mouse walk to (x, z), e.g. the cheese on a mouse trap
+    lure(x, z) {
+        if (this.state !== 'ROAMING') return;
+        this.wanderTarget.set(x, this.room.zeroGravity ? FLOAT_MIN_Y : 0, z);
+        this.pauseTimer = 0;
     }
 
     applySpeeds() {
@@ -185,13 +201,20 @@ export class Mouse {
         this.mesh.add(this.catchPromptSprite);
     }
 
-    update(dt, catPos) {
+    /**
+     * @param {number} dt
+     * @param {THREE.Vector3} catPos
+     * @param {object} [opts] - { calm: true } the mouse doesn't run from the cat (Cheese Lure boost),
+     *                          catchRadius: shows the catch prompt from further away (Magnet Paws boost)
+     */
+    update(dt, catPos, opts = {}) {
         if (this.state === 'CAUGHT') return;
 
         const distToCat = this.position.distanceTo(catPos);
-        const isCatNear = distToCat < this.alertDistance;
+        const isCatNear = !opts.calm && distToCat < this.alertDistance;
+        const zeroG = this.room.zeroGravity;
 
-        const inCatchRange = distToCat <= 3.2;
+        const inCatchRange = distToCat <= (opts.catchRadius || CATCH_RADIUS);
         if (this.catchPromptSprite) {
             this.catchPromptSprite.visible = inCatchRange;
             if (inCatchRange) {
@@ -231,6 +254,13 @@ export class Mouse {
                 else this.rotationY += Math.PI * 0.5;
             }
 
+            // Floating mice also swim up or down, away from the cat
+            if (zeroG) {
+                const away = this.position.y >= catPos.y ? 1 : -1;
+                this.position.y += away * this.fleeSpeed * 0.35 * dt;
+                if (this.position.y >= FLOAT_MAX_Y || this.position.y <= FLOAT_MIN_Y) this.wanderTarget.y = randomFloatHeight();
+            }
+
         } else {
             this.state = 'ROAMING';
             if (this.exclamationMesh) this.exclamationMesh.visible = false;
@@ -264,6 +294,11 @@ export class Mouse {
                     }
                 }
             }
+
+            if (zeroG) {
+                const dy = this.wanderTarget.y - this.position.y;
+                this.position.y += Math.sign(dy) * Math.min(Math.abs(dy), this.speed * 0.4 * dt);
+            }
         }
 
         const limitX = this.room.roomWidth / 2 - 1.2;
@@ -272,7 +307,14 @@ export class Mouse {
         this.position.z = Math.max(-limitZ, Math.min(limitZ, this.position.z));
 
         const isMoving = this.pauseTimer <= 0 || this.state === 'FLEEING';
-        if (isMoving) {
+        if (zeroG) {
+            // Drifting and slowly tumbling in the air
+            this.position.y = Math.max(FLOAT_MIN_Y, Math.min(FLOAT_MAX_Y, this.position.y));
+            this.walkCycle += dt * (this.state === 'FLEEING' ? 14 : 6);
+            const t = Date.now() * 0.002;
+            this.mesh.position.set(this.position.x, this.position.y + Math.sin(t + this.rotationY) * 0.12, this.position.z);
+            this.mesh.rotation.z = Math.sin(t * 0.7 + this.position.x) * 0.5;
+        } else if (isMoving) {
             this.walkCycle += dt * (this.state === 'FLEEING' ? 22 : 14);
             this.mesh.position.set(this.position.x, Math.abs(Math.sin(this.walkCycle)) * 0.05, this.position.z);
         } else {

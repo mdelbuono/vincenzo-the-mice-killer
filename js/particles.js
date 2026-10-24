@@ -92,6 +92,25 @@ export class ParticleManager {
         }
     }
 
+    // Cone of water droplets from the Super Squirter
+    spawnSplash(pos, dir, spread) {
+        const baseAngle = Math.atan2(dir.z, dir.x);
+        for (let i = 0; i < 36; i++) {
+            const mat = new THREE.MeshBasicMaterial({ color: i % 3 ? 0x48dbfb : 0xdff9fb, transparent: true, opacity: 0.85 });
+            const p = new THREE.Mesh(this.dustGeo, mat);
+            p.position.copy(pos);
+            const angle = baseAngle + (Math.random() - 0.5) * 2 * spread;
+            const speed = 9 + Math.random() * 7;
+            p.userData = {
+                vel: new THREE.Vector3(Math.cos(angle) * speed, 2 + Math.random() * 2, Math.sin(angle) * speed),
+                life: 1.0,
+                decay: 1.8
+            };
+            this.scene.add(p);
+            this.particles.push(p);
+        }
+    }
+
     update(dt) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];

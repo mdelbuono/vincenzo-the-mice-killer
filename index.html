@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Vincenzo The Mice Killer - 3D 3-Level Game</title>
+    <title>Vincenzo The Mice Killer - 3D Mouse Hunting Game</title>
     <!-- Stylesheet -->
     <link rel="stylesheet" href="./css/style.css">
 </head>
@@ -63,7 +63,7 @@
             </div>
         </div>
 
-        <!-- Power-ups bought in the shop (keys 1/2/3/E/F, or tap) -->
+        <!-- Power-ups bought in the shop (keys 1-0 and E/F/G/T/R, or tap) -->
         <div id="powerup-bar" class="powerup-bar"></div>
 
         <!-- Prominent Catch Alert Prompt -->
@@ -81,8 +81,9 @@
                 <div class="hint-item highlight"><span class="key-badge primary">SPACEBAR</span> Catch / Pounce</div>
                 <div class="hint-item"><span class="key-badge">SHIFT</span> Sprint</div>
                 <div class="hint-item"><span class="key-badge">C</span> Switch Cam</div>
-                <div class="hint-item"><span class="key-badge">1-4</span> Boosts</div>
-                <div class="hint-item"><span class="key-badge">E</span> Sneeze <span class="key-badge">F</span> Blaster</div>
+                <div class="hint-item float-only"><span class="key-badge">Q</span> <span class="key-badge">Z</span> Float Up / Down</div>
+                <div class="hint-item"><span class="key-badge">1-0</span> Boosts</div>
+                <div class="hint-item"><span class="key-badge">E F G T R</span> Weapons</div>
             </div>
 
             <!-- Quick Action Buttons -->
@@ -100,6 +101,8 @@
             <div class="touch-stick" id="touch-stick"></div>
         </div>
         <div class="touch-actions">
+            <div class="touch-btn float-btn float-only" id="btn-touch-up">UP ⬆</div>
+            <div class="touch-btn float-btn float-only" id="btn-touch-down">DOWN ⬇</div>
             <div class="touch-btn sprint-btn" id="btn-touch-sprint">SPRINT</div>
             <div class="touch-btn" id="btn-touch-pounce">CATCH!<br><span style="font-size:10px">[SPACE]</span></div>
         </div>
@@ -108,10 +111,10 @@
     <!-- Start Screen Overlay -->
     <div id="start-screen" class="overlay-screen">
         <div class="screen-modal">
-            <div style="font-size: 46px; margin-bottom: 6px;">🐾 🛋️ 📦 🍷</div>
+            <div style="font-size: 46px; margin-bottom: 6px;">🐾 🛋️ 🌳 ⛵ 🚀</div>
             <h1 class="screen-title">Vincenzo</h1>
             <p style="font-size: 19px; color: #ffa502; font-weight: 700; margin-top:-6px; margin-bottom: 12px;">The Mice Killer</p>
-            <p class="screen-subtitle" id="start-screen-subtitle">5-Level 3D Mouse Hunting Campaign</p>
+            <p class="screen-subtitle" id="start-screen-subtitle">10-Level 3D Mouse Hunting Campaign + Endless Mode</p>
             
             <!-- Player accounts: each player has their own brokjes and purchases -->
             <div class="account-box">
@@ -124,30 +127,20 @@
                 <div class="account-error" id="account-error"></div>
             </div>
 
-            <div class="level-selector-row">
-                <button class="lvl-pill active" data-level="1">Lvl 1: Living Room (10)</button>
-                <button class="lvl-pill" data-level="2">Lvl 2: The Attic (15)</button>
-                <button class="lvl-pill" data-level="3">Lvl 3: The Basement (20)</button>
-                <button class="lvl-pill" data-level="4">Lvl 4: The Kitchen (25)</button>
-                <button class="lvl-pill" data-level="5">Lvl 5: The Bedroom (30)</button>
+            <!-- Levels mode continues from the first level not completed yet (filled in by game.js) -->
+            <div class="start-progress" id="start-progress"></div>
+
+            <div class="mode-buttons">
+                <button class="action-button" id="start-levels-btn">
+                    <span id="start-levels-btn-text">Start Level 1</span> 😼
+                </button>
+                <button class="action-button endless-button" id="start-endless-btn" disabled>
+                    <span>Endless Mode</span> ♾️
+                </button>
             </div>
 
-            <div class="mission-box" id="start-mission-desc">
-                <strong>Campaign Rules:</strong>
-                <ul>
-                    <li>Level 1 (Living Room): Catch <strong>10 mice</strong> in 3 minutes (+50 bonus brokjes).</li>
-                    <li>Level 2 (The Attic): Catch <strong>15 mice</strong> in 2.5 minutes (faster mice! +100 bonus brokjes).</li>
-                    <li>Level 3 (The Basement): Catch <strong>20 mice</strong> in 2 minutes (intense swarm! +200 bonus brokjes).</li>
-                    <li>Level 4 (The Kitchen): Catch <strong>25 mice</strong> in 2 minutes (very fast mice! +300 bonus brokjes).</li>
-                    <li>Level 5 (The Bedroom): Catch <strong>30 mice</strong> in 2 minutes (lightning-fast mice in the dark! +400 bonus brokjes).</li>
-                    <li>Each mouse caught awards <strong>10 brokjes</strong>.</li>
-                    <li>Press <strong>SPACEBAR</strong> when near a mouse to pounce and catch it!</li>
-                </ul>
-            </div>
-
-            <button class="action-button" id="start-game-btn">
-                <span>Start Hunt!</span> 😼
-            </button>
+            <!-- Campaign rules (filled in from levels.json by game.js) -->
+            <div class="mission-box" id="start-mission-desc"></div>
         </div>
     </div>
 
@@ -195,12 +188,9 @@
             </div>
 
             <button class="action-button" id="retry-level-btn">
-                <span>Retry Level</span> 🔄
+                <span id="retry-level-btn-text">Retry Level</span> 🔄
             </button>
             <br>
-            <button class="secondary-btn" id="restart-all-btn">
-                Start from Level 1
-            </button>
             <button class="secondary-btn" data-main-menu>🏠 Main Menu</button>
         </div>
     </div>
@@ -215,6 +205,7 @@
                 <span>Resume Hunt</span> ▶️
             </button>
             <br>
+            <button class="secondary-btn" id="stop-endless-btn" style="display: none;">🏁 Stop Hunting</button>
             <button class="secondary-btn" data-main-menu>🏠 Main Menu</button>
         </div>
     </div>

@@ -1,0 +1,40 @@
+{
+  "id": "workshop",
+  "name": "The Abandoned Workshop",
+  "lights": [
+    { "type": "ambient", "color": "0x4b4b5a", "intensity": 0.45 },
+    {
+      "type": "directional",
+      "color": "0xfff6c8",
+      "intensity": 0.6,
+      "position": [5, 14, -4],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 20
+    },
+    { "type": "point", "color": "0xffd28a", "intensity": 1.0, "distance": 16, "position": [0, 5.5, -6] },
+    { "type": "point", "color": "0xff9f43", "intensity": 0.7, "distance": 14, "position": [-8, 5.5, 4] }
+  ],
+  "floor": { "texture": "concrete", "roughness": 0.85 },
+  "ceiling": { "color": "0x2d3436", "roughness": 0.9 },
+  "walls": { "texture": "corrugatedMetal", "roughness": 0.6 },
+  "extras": [
+    { "type": "cobwebs" },
+    { "type": "skylightBeam", "position": [5, -4] }
+  ],
+  "props": [
+    { "builder": "oldCar",            "x": 5,     "z": -4 },
+    { "builder": "workbench",         "x": -11,   "z": -10.5 },
+    { "builder": "toolWall",          "x": 5,     "z": -12.6 },
+    { "builder": "barrelStack",       "x": 13.5,  "z": -9 },
+    { "builder": "tireStack",         "x": -13.5, "z": 6 },
+    { "builder": "tireStack",         "x": 12.5,  "z": 8 },
+    { "builder": "sawHorse",          "x": -4,    "z": 8 },
+    { "builder": "palletWithCrates",  "x": 7,     "z": 8 },
+    { "builder": "cardboardBoxStack", "x": -14,   "z": -3 },
+    { "builder": "oldGenerator",      "x": -6,    "z": -3 },
+    { "builder": "stepLadder",        "x": 14.5,  "z": -2 },
+    { "builder": "hangingBulb",       "x": 0,     "y": 6.0, "z": -6 },
+    { "builder": "hangingBulb",       "x": -8,    "y": 6.0, "z": 4 }
+  ]
+}

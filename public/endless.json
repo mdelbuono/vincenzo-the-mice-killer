@@ -1,0 +1,63 @@
+{
+  "name": "Endless House",
+  "startRoom": "living_room",
+  "miceCount": 6,
+  "speedMult": 1.2,
+  "brokjesPerMouse": 10,
+  "goldenMouseChance": 0.15,
+  "goldenMouseBrokjes": 60,
+  "milestoneEvery": 25,
+  "milestoneBrokjes": 100,
+  "rooms": {
+    "living_room": {
+      "name": "Living Room", "icon": "🛋️",
+      "environment": "environments/living_room.json",
+      "doors": [
+        { "wall": "east",  "at": 0,  "to": "kitchen" },
+        { "wall": "west",  "at": 5,  "to": "bedroom" },
+        { "wall": "north", "at": 8,  "to": "attic" },
+        { "wall": "south", "at": -8, "to": "backyard" }
+      ]
+    },
+    "kitchen": {
+      "name": "Kitchen", "icon": "🍳",
+      "environment": "environments/kitchen.json",
+      "miceCount": 7, "speedMult": 1.3,
+      "doors": [
+        { "wall": "west", "at": 5, "to": "living_room" },
+        { "wall": "east", "at": 0, "to": "basement" }
+      ]
+    },
+    "bedroom": {
+      "name": "Bedroom", "icon": "🛏️",
+      "environment": "environments/bedroom.json",
+      "miceCount": 7, "speedMult": 1.3,
+      "doors": [
+        { "wall": "east", "at": 0, "to": "living_room" }
+      ]
+    },
+    "attic": {
+      "name": "Attic", "icon": "📦",
+      "environment": "environments/attic.json",
+      "doors": [
+        { "wall": "south", "at": 0, "to": "living_room" }
+      ]
+    },
+    "basement": {
+      "name": "Basement", "icon": "🛢️",
+      "environment": "environments/basement.json",
+      "miceCount": 8, "speedMult": 1.4,
+      "doors": [
+        { "wall": "west", "at": -2, "to": "kitchen" }
+      ]
+    },
+    "backyard": {
+      "name": "Backyard", "icon": "🌳",
+      "environment": "environments/backyard.json",
+      "miceCount": 8, "speedMult": 1.4,
+      "doors": [
+        { "wall": "north", "at": -8, "to": "living_room" }
+      ]
+    }
+  }
+}
