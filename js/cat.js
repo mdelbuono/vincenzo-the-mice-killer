@@ -363,12 +363,10 @@ export class Cat {
             }
         }
 
-        // Floating up and down in zero gravity; on the floor everywhere else
+        // Floating up and down in zero gravity
         if (zeroG) {
             const lift = (input.up ? 1 : 0) - (input.down ? 1 : 0);
             this.position.y = Math.max(0, Math.min(FLOAT_MAX_Y, this.position.y + lift * FLOAT_SPEED * dt));
-        } else {
-            this.position.y = 0;
         }
 
         const moveStep = this.speed * dt;
@@ -386,6 +384,9 @@ export class Cat {
         } else {
             this.speed *= 0.5;
         }
+
+        // On the floor everywhere else (which is higher or lower on the stairs of a passage)
+        if (!zeroG) this.position.y = room.floorHeight(this.position.x, this.position.z);
 
         let leapY = 0;
         if (this.isPouncing) {

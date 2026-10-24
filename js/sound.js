@@ -319,6 +319,24 @@ export class SoundEngine {
         });
     }
 
+    // Endless mode: beaming through the teleporter (a rising sci-fi sweep)
+    playTeleport() {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.exponentialRampToValueAtTime(1600, t + 0.6);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.7);
+        this.playNoise(0.6, 400, 4000, 0.2);
+    }
+
     startBackgroundMusic() {
         if (this.musicInterval) return;
         const chords = [

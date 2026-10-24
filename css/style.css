@@ -546,15 +546,50 @@
             transform: none;
         }
 
-        /* Start screen: campaign progress and the two game modes */
-        .start-progress {
+        /* Start screen: level picker and the two game modes */
+        .level-picker {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
             font-size: 15px;
             color: #d2dae2;
-            margin-bottom: 14px;
+            font-weight: 700;
         }
 
-        .start-progress strong {
+        .level-picker select {
+            max-width: 100%;
+            background: rgba(20, 24, 36, 0.95);
             color: #ffd32a;
+            border: 2px solid #ffa502;
+            border-radius: 12px;
+            padding: 9px 14px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .level-picker select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 165, 2, 0.35);
+        }
+
+        /* Endless mode: fade between rooms and passages (a bright flash for the teleporter) */
+        #room-fade {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background: #000000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        #room-fade.flash {
+            background: radial-gradient(circle, #ffffff 0%, #48dbfb 60%, #6c5ce7 100%);
         }
 
         .mode-buttons {

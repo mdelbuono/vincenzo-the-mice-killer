@@ -57,7 +57,8 @@ export class Shop {
             inventory: {},
             selectedCat: 'cat_vincenzo',
             equipped: { hat: null, face: null, neck: null, back: null },
-            nextLevel: 1 // first campaign level not completed yet
+            nextLevel: 1,       // campaign level the start screen offers first
+            completedLevels: [] // levels cleared at least once
         };
     }
 
@@ -78,6 +79,11 @@ export class Shop {
         };
         // Points used to be called "kibbles"
         if (saved.kibbles !== undefined && saved.brokjes === undefined) data.brokjes = saved.kibbles;
+        // Levels used to be played strictly in order: every level before nextLevel was cleared
+        if (!Array.isArray(saved.completedLevels)) {
+            data.completedLevels = [];
+            for (let lvl = 1; lvl < data.nextLevel; lvl++) data.completedLevels.push(lvl);
+        }
         delete data.kibbles;
         delete data.secretFound; // left over from the removed password easter egg
         return data;
@@ -105,10 +111,17 @@ export class Shop {
         if (this.callbacks.onWalletChange) this.callbacks.onWalletChange(this.data.brokjes);
     }
 
-    // Campaign progress: the level the player continues from
+    // Campaign progress: the level the start screen offers first
     get nextLevel() { return this.data.nextLevel; }
     set nextLevel(level) {
         this.data.nextLevel = level;
+        this.persist();
+    }
+
+    get completedLevels() { return this.data.completedLevels; }
+    markLevelCompleted(level) {
+        if (this.data.completedLevels.includes(level)) return;
+        this.data.completedLevels.push(level);
         this.persist();
     }
 

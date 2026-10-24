@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Vincenzo The Mice Killer - 3D Mouse Hunting Game</title>
     <!-- Stylesheet -->
-  <script type="module" crossorigin src="./assets/index-efF0TZyo.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BLN2KA6A.css">
+  <script type="module" crossorigin src="./assets/index-BLpSFRTS.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BMxMBFQ-.css">
 </head>
 <body>
 
@@ -109,6 +109,9 @@
         </div>
     </div>
 
+    <!-- Endless mode: the screen fades out while walking into another room -->
+    <div id="room-fade"></div>
+
     <!-- Start Screen Overlay -->
     <div id="start-screen" class="overlay-screen">
         <div class="screen-modal">
@@ -128,8 +131,11 @@
                 <div class="account-error" id="account-error"></div>
             </div>
 
-            <!-- Levels mode continues from the first level not completed yet (filled in by game.js) -->
-            <div class="start-progress" id="start-progress"></div>
+            <!-- Levels mode: pick any level to start with (filled in by game.js) -->
+            <div class="level-picker">
+                <label for="level-select">🎯 Start with</label>
+                <select id="level-select"></select>
+            </div>
 
             <div class="mode-buttons">
                 <button class="action-button" id="start-levels-btn">

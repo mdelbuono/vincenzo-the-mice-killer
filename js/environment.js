@@ -17,6 +17,7 @@ const DEFAULT_WALL_HEIGHT = 8;
 
 // Endless-mode door: how close (along the wall) the cat must be to walk through
 const DOOR_HALF_WIDTH = 1.5;
+const FLAP_HALF_WIDTH = 1.0;  // hidden doors are small cat flaps
 
 // Shorthands for the prop builders below
 function std(color, extra = {}) {
@@ -61,6 +62,7 @@ export class LevelEnvironment {
         this.zeroGravity = false;
         this.animators = []; // functions (dt, time) for moving decorations
         this.doors = [];     // endless-mode doors to other rooms
+        this.heightFn = null; // (x, z) => floor height, for stairs in passages
     }
 
     clearCurrentLevel() {
@@ -79,7 +81,13 @@ export class LevelEnvironment {
         this.zeroGravity = false;
         this.animators = [];
         this.doors = [];
+        this.heightFn = null;
         this.wallHeight = DEFAULT_WALL_HEIGHT;
+    }
+
+    // Height of the floor at (x, z): 0 everywhere except on the stairs of a passage
+    floorHeight(x, z) {
+        return this.heightFn ? this.heightFn(x, z) : 0;
     }
 
     // Called every frame: animated TV, clouds, waves, reactor rings, door mats...
@@ -1550,42 +1558,97 @@ export class LevelEnvironment {
 
     /**
      * Adds doorways to other rooms of the house (endless mode).
-     * @param {Array} doors - [{ wall: 'north'|'south'|'east'|'west', at, to, label }]
+     * @param {Array} doors - [{ wall: 'north'|'south'|'east'|'west', at, to, label, style, y }]
+     *   style: 'door' (default indoors), 'gate' (default for low walls), 'portal' (teleporter)
+     *   or 'flap' (a hidden cat flap without sign or doormat). y raises the door (top of the stairs).
      */
     addDoors(doors) {
-        const frameMat = std(0x8d6e63, { roughness: 0.5 });
-        const darkMat = new THREE.MeshBasicMaterial({ color: 0x1a1208 });
         doors.forEach(door => {
+            const style = door.style || (this.wallHeight < 5 ? 'gate' : 'door');
             const { x, z, rotY } = this.wallPoint(door.wall, door.at, 0);
             const g = this.propGroup(x, z);
+            g.position.y = door.y || 0;
             g.rotation.y = rotY;
+            door.halfWidth = style === 'flap' ? FLAP_HALF_WIDTH : DOOR_HALF_WIDTH;
 
-            const opening = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 4.2), darkMat);
-            opening.position.set(0, 2.1, 0.04);
-            g.add(opening);
-            addMesh(g, new THREE.BoxGeometry(0.3, 4.5, 0.3), frameMat, -1.55, 2.25, 0.1);
-            addMesh(g, new THREE.BoxGeometry(0.3, 4.5, 0.3), frameMat, 1.55, 2.25, 0.1);
-            addMesh(g, new THREE.BoxGeometry(3.4, 0.3, 0.3), frameMat, 0, 4.5, 0.1);
+            if (style === 'flap') {
+                this.buildCatFlap(g);
+            } else {
+                if (style === 'portal') this.buildPortal(g);
+                else this.buildDoorFrame(g, style === 'gate');
 
-            const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: createDoorSignTexture(door.label) }));
-            sign.position.set(0, 5.1, 0.14);
-            g.add(sign);
+                const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.7), new THREE.MeshBasicMaterial({ map: createDoorSignTexture(door.label) }));
+                sign.position.set(0, 5.1, 0.14);
+                g.add(sign);
 
-            // Pulsing doormat with an arrow pointing at the door
-            const matMat = new THREE.MeshBasicMaterial({ color: 0xffa502, transparent: true, opacity: 0.5, depthWrite: false });
-            const doormat = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.8), matMat);
-            doormat.rotation.x = -Math.PI / 2;
-            doormat.position.set(0, 0.03, 1.0);
-            g.add(doormat);
-            const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.9, 3), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-            arrow.rotation.x = -Math.PI / 2;
-            arrow.scale.z = 0.1;
-            arrow.position.set(0, 0.06, 1.0);
-            g.add(arrow);
-            this.animate((dt, t) => { matMat.opacity = 0.35 + Math.sin(t * 4) * 0.2; });
+                // Pulsing doormat with an arrow pointing at the door
+                const matMat = new THREE.MeshBasicMaterial({ color: style === 'portal' ? 0x48dbfb : 0xffa502, transparent: true, opacity: 0.5, depthWrite: false });
+                const doormat = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.8), matMat);
+                doormat.rotation.x = -Math.PI / 2;
+                doormat.position.set(0, 0.03, 1.0);
+                g.add(doormat);
+                const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.9, 3), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                arrow.rotation.x = -Math.PI / 2;
+                arrow.scale.z = 0.1;
+                arrow.position.set(0, 0.06, 1.0);
+                g.add(arrow);
+                this.animate((dt, t) => { matMat.opacity = 0.35 + Math.sin(t * 4) * 0.2; });
+            }
 
             this.doors.push(door);
         });
+    }
+
+    // Wooden door frame around a dark opening (a gate has a sunny opening instead)
+    buildDoorFrame(g, gate) {
+        const frameMat = std(gate ? 0x6d4c41 : 0x8d6e63, { roughness: 0.5 });
+        const openingMat = gate
+            ? new THREE.MeshBasicMaterial({ color: 0xfff6d5, transparent: true, opacity: 0.55, side: THREE.DoubleSide })
+            : new THREE.MeshBasicMaterial({ color: 0x1a1208 });
+        const opening = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 4.2), openingMat);
+        opening.position.set(0, 2.1, 0.04);
+        g.add(opening);
+        addMesh(g, new THREE.BoxGeometry(0.3, 4.5, 0.3), frameMat, -1.55, 2.25, 0.1);
+        addMesh(g, new THREE.BoxGeometry(0.3, 4.5, 0.3), frameMat, 1.55, 2.25, 0.1);
+        addMesh(g, new THREE.BoxGeometry(3.4, 0.3, 0.3), frameMat, 0, 4.5, 0.1);
+        if (gate) {
+            // Flower-covered arch on top
+            const leaf = std(0x2d8a4e, { roughness: 0.9 });
+            const arch = addMesh(g, new THREE.TorusGeometry(1.7, 0.22, 8, 16, Math.PI), leaf, 0, 4.5, 0.1);
+            arch.scale.y = 0.45;
+            [0xff6b81, 0xfeca57, 0xffffff].forEach((c, i) => {
+                addMesh(g, new THREE.SphereGeometry(0.16, 8, 6), std(c), -1.2 + i * 1.2, 4.95 + (i % 2) * 0.25, 0.3);
+            });
+        }
+    }
+
+    // Teleporter: a glowing spinning ring around a shimmering disc
+    buildPortal(g) {
+        const ringMat = new THREE.MeshStandardMaterial({ color: 0x8e44ad, emissive: 0x6c5ce7, emissiveIntensity: 0.8, metalness: 0.6, roughness: 0.3 });
+        const ring = addMesh(g, new THREE.TorusGeometry(1.9, 0.22, 12, 40), ringMat, 0, 2.3, 0.2);
+        const discMat = new THREE.MeshBasicMaterial({ color: 0x48dbfb, transparent: true, opacity: 0.6, side: THREE.DoubleSide, depthWrite: false });
+        const disc = new THREE.Mesh(new THREE.CircleGeometry(1.75, 40), discMat);
+        disc.position.set(0, 2.3, 0.18);
+        g.add(disc);
+        const glow = new THREE.PointLight(0x48dbfb, 1.2, 8);
+        glow.position.set(0, 2.3, 1.2);
+        g.add(glow);
+        this.animate((dt, t) => {
+            ring.rotation.z = t * 1.5;
+            discMat.opacity = 0.45 + Math.sin(t * 6) * 0.2;
+            discMat.color.setHSL(0.52 + Math.sin(t * 2) * 0.08, 0.9, 0.6);
+        });
+    }
+
+    // Secret way out: a small dark cat flap low on the wall, without sign or doormat
+    buildCatFlap(g) {
+        const opening = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.4), new THREE.MeshBasicMaterial({ color: 0x0d0904 }));
+        opening.position.set(0, 0.7, 0.03);
+        g.add(opening);
+        const trim = std(0x5d4037, { roughness: 0.7 });
+        addMesh(g, new THREE.BoxGeometry(1.8, 0.15, 0.12), trim, 0, 1.45, 0.06);
+        addMesh(g, new THREE.BoxGeometry(0.15, 1.45, 0.12), trim, -0.82, 0.72, 0.06);
+        addMesh(g, new THREE.BoxGeometry(0.15, 1.45, 0.12), trim, 0.82, 0.72, 0.06);
     }
 
     // The door the cat is walking into at (x, z), or null
@@ -1595,7 +1658,7 @@ export class LevelEnvironment {
         for (const door of this.doors) {
             const along = (door.wall === 'north' || door.wall === 'south' ? x : z) - door.at;
             const fromWall = { north: z + hd, south: hd - z, east: hw - x, west: x + hw }[door.wall];
-            if (Math.abs(along) < DOOR_HALF_WIDTH && fromWall < 1.0) return door;
+            if (Math.abs(along) < (door.halfWidth || DOOR_HALF_WIDTH) && fromWall < 1.0) return door;
         }
         return null;
     }
