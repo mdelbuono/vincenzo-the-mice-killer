@@ -88,7 +88,8 @@
       "miceCount": 14, "speedMult": 1.5,
       "doors": [
         { "wall": "north", "at": 8, "to": "backyard" },
-        { "wall": "east",  "at": 0, "to": "boat" }
+        { "wall": "east",  "at": 0, "to": "boat" },
+        { "wall": "south", "at": 6, "to": "shop_cats" }
       ]
     },
     "boat": {
@@ -97,7 +98,68 @@
       "place": "town",
       "miceCount": 14, "speedMult": 1.5,
       "doors": [
-        { "wall": "west", "at": 0, "to": "supermarket" }
+        { "wall": "west", "at": 0, "to": "supermarket" },
+        { "wall": "east", "at": 0, "to": "underwater" }
+      ]
+    },
+    "underwater": {
+      "name": "Under the Sea", "icon": "🐠",
+      "environment": "environments/underwater.json",
+      "place": "sea",
+      "miceCount": 13, "speedMult": 1.45,
+      "doors": [
+        { "wall": "west", "at": 0, "to": "boat" }
+      ]
+    },
+    "shop_cats": {
+      "name": "Cat Gallery", "icon": "🐱",
+      "environment": "environments/shop_cats.json",
+      "place": "town",
+      "miceCount": 12, "speedMult": 1.4,
+      "doors": [
+        { "wall": "west",  "at": 0,  "to": "supermarket" },
+        { "wall": "east",  "at": 0,  "to": "shop_boosts", "passage": "corridor" },
+        { "wall": "south", "at": -8, "to": "shop_surprises", "passage": "corridor" }
+      ]
+    },
+    "shop_boosts": {
+      "name": "Boost Bar", "icon": "⚡",
+      "environment": "environments/shop_boosts.json",
+      "place": "town",
+      "miceCount": 12, "speedMult": 1.45,
+      "doors": [
+        { "wall": "west", "at": 0, "to": "shop_cats", "passage": "corridor" },
+        { "wall": "east", "at": 0, "to": "shop_weapons", "passage": "corridor" }
+      ]
+    },
+    "shop_weapons": {
+      "name": "Weapon Vault", "icon": "🤧",
+      "environment": "environments/shop_weapons.json",
+      "place": "town",
+      "miceCount": 12, "speedMult": 1.45,
+      "doors": [
+        { "wall": "west",  "at": 0, "to": "shop_boosts", "passage": "corridor" },
+        { "wall": "south", "at": 0, "to": "shop_clothes", "passage": "corridor" }
+      ]
+    },
+    "shop_clothes": {
+      "name": "Fashion Boutique", "icon": "🎩",
+      "environment": "environments/shop_clothes.json",
+      "place": "town",
+      "miceCount": 13, "speedMult": 1.45,
+      "doors": [
+        { "wall": "north", "at": 0, "to": "shop_weapons", "passage": "corridor" },
+        { "wall": "west",  "at": 0, "to": "shop_surprises", "passage": "corridor" }
+      ]
+    },
+    "shop_surprises": {
+      "name": "Surprise Corner", "icon": "🎁",
+      "environment": "environments/shop_surprises.json",
+      "place": "town",
+      "miceCount": 12, "speedMult": 1.45, "goldenMouseChance": 0.35,
+      "doors": [
+        { "wall": "east",  "at": 0,  "to": "shop_clothes", "passage": "corridor" },
+        { "wall": "north", "at": -8, "to": "shop_cats", "passage": "corridor" }
       ]
     },
     "spaceship": {

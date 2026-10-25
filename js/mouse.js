@@ -313,7 +313,8 @@ export class Mouse {
             this.walkCycle += dt * (this.state === 'FLEEING' ? 14 : 6);
             const t = Date.now() * 0.002;
             this.mesh.position.set(this.position.x, this.position.y + Math.sin(t + this.rotationY) * 0.12, this.position.z);
-            this.mesh.rotation.z = Math.sin(t * 0.7 + this.position.x) * 0.5;
+            // Underwater mice swim level (wiggling), in space they tumble
+            this.mesh.rotation.z = this.room.underwater ? Math.sin(this.walkCycle) * 0.12 : Math.sin(t * 0.7 + this.position.x) * 0.5;
         } else if (isMoving) {
             this.walkCycle += dt * (this.state === 'FLEEING' ? 22 : 14);
             this.mesh.position.set(this.position.x, Math.abs(Math.sin(this.walkCycle)) * 0.05, this.position.z);

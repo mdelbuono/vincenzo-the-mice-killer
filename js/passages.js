@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createParquetTexture, createGrassTexture, createRugTexture, createStarfieldTexture, createDoorSignTexture } from './textures.js';
+import { createParquetTexture, createGrassTexture, createRugTexture, createStarfieldTexture, createDoorSignTexture, createSandTexture } from './textures.js';
 
 // Endless mode: the cat walks through a passage from one room to the next.
 // Every passage is a strip along the x axis: the cat comes in at the west end
@@ -20,6 +20,7 @@ export function passageType(fromRoom, toRoom) {
     const placeA = fromRoom.place || 'house';
     const placeB = toRoom.place || 'house';
     if (placeA === 'space' || placeB === 'space') return 'teleport';
+    if (placeA === 'sea' || placeB === 'sea') return 'dive';
     if (placeA === 'house' && placeB === 'house') {
         return (fromRoom.floor || 0) === (toRoom.floor || 0) ? 'corridor' : 'stairs';
     }
@@ -30,7 +31,7 @@ export function passageType(fromRoom, toRoom) {
 /**
  * Builds a passage in the environment (replacing the current room).
  * @param {LevelEnvironment} env
- * @param {string} type - 'corridor' | 'stairs' | 'path' | 'road' | 'teleport'
+ * @param {string} type - 'corridor' | 'stairs' | 'path' | 'road' | 'teleport' | 'dive'
  * @param {object} back  - the room the cat comes from: { id, label, place, floor }
  * @param {object} ahead - the room the passage leads to: { id, label, place, floor }
  */
@@ -51,6 +52,7 @@ export function buildPassage(env, type, back, ahead) {
         case 'path': buildPath(env, doors, back, ahead); break;
         case 'road': buildRoad(env, doors); break;
         case 'teleport': buildTeleport(env, doors); break;
+        case 'dive': buildDive(env, doors); break;
         default: buildCorridor(env, doors);
     }
     env.addDoors(doors);
@@ -430,4 +432,55 @@ function buildTeleport(env, doors) {
     });
 
     doors.forEach(d => { d.style = 'portal'; });
+}
+
+// Down to the bottom of the sea: a glass tunnel through the water, with fish swimming around it
+function buildDive(env, doors) {
+    setSky(env, 0x0a4f7a, 0.03, 0x0e6a8f);
+    env.lightsGroup.add(new THREE.HemisphereLight(0x9be7ff, 0x0b3d5c, 0.8));
+    env.lightsGroup.add(new THREE.AmbientLight(0x7fd6ff, 0.35));
+    [-10, 0, 10].forEach(x => addLight(env, new THREE.PointLight(0x48dbfb, 0.8, 12), x, 4.5, 0));
+
+    // Sand outside the tunnel, a walkway inside
+    const sand = new THREE.Mesh(new THREE.PlaneGeometry(LENGTH + 20, 40), new THREE.MeshStandardMaterial({ map: createSandTexture(), roughness: 0.95 }));
+    sand.rotation.x = -Math.PI / 2;
+    sand.position.y = -0.02;
+    env.roomGroup.add(sand);
+    addFloor(env, -LENGTH / 2, LENGTH / 2, 0, std(0x34495e, { metalness: 0.4, roughness: 0.4 }));
+    const stripMat = new THREE.MeshBasicMaterial({ color: 0x48dbfb, transparent: true, opacity: 0.5 });
+    addFloor(env, -LENGTH / 2, LENGTH / 2, 0.01, stripMat, 0.4);
+
+    // The glass tube with metal rings holding it together
+    const radius = 5.6; // tall enough for the door signs
+    const glass = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius, LENGTH, 32, 1, true, 0, Math.PI),
+        new THREE.MeshStandardMaterial({ color: 0xdff9fb, transparent: true, opacity: 0.18, roughness: 0.05, side: THREE.DoubleSide, depthWrite: false })
+    );
+    glass.rotation.z = Math.PI / 2;
+    env.roomGroup.add(glass);
+    const ringMat = std(0x95a5a6, { metalness: 0.7, roughness: 0.3 });
+    for (let x = -LENGTH / 2 + 2; x < LENGTH / 2; x += 4) {
+        const ring = addMesh(env.roomGroup, new THREE.TorusGeometry(radius, 0.08, 6, 24, Math.PI), ringMat, x, 0, 0);
+        ring.rotation.y = Math.PI / 2;
+    }
+
+    // Steel bulkheads with hatches at both ends
+    const bulkhead = std(0x57606f, { metalness: 0.6, roughness: 0.4 });
+    [[-LENGTH / 2, Math.PI / 2], [LENGTH / 2, -Math.PI / 2]].forEach(([x, rot]) => {
+        const end = new THREE.Mesh(new THREE.CircleGeometry(radius, 32, 0, Math.PI), bulkhead);
+        end.position.set(x, 0, 0);
+        end.rotation.set(0, rot, 0);
+        env.roomGroup.add(end);
+    });
+
+    // Coral, seaweed and rocks on the sea floor around the tunnel
+    [[-12, -6, '0xff7675'], [-3, 6, '0xfdcb6e'], [7, -7, '0xa29bfe'], [13, 6, '0x55efc4']].forEach(([x, z, color]) => env.buildCoral(x, z, color));
+    [[-8, 6], [3, -6], [11, -5]].forEach(([x, z]) => env.buildSeaweed(x, z));
+    env.buildSeaRock(-14, 7);
+    env.buildJellyfish(-5, 5, -6, '0xff9ff3');
+    env.buildJellyfish(9, 6, 5, '0x48dbfb');
+    env._buildExtra({ type: 'fishSchool', count: 3 });
+    env._buildExtra({ type: 'bubbles' });
+
+    doors.forEach(d => { d.style = 'door'; });
 }

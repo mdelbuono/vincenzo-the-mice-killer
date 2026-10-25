@@ -111,6 +111,23 @@ export class ParticleManager {
         }
     }
 
+    // Underwater: a few bubbles wobbling up from the cat
+    spawnBubbles(pos, count = 3) {
+        for (let i = 0; i < count; i++) {
+            const mat = new THREE.MeshBasicMaterial({ color: 0xe0f7ff, transparent: true, opacity: 0.7 });
+            const p = new THREE.Mesh(this.dustGeo, mat);
+            p.position.set(pos.x + (Math.random() - 0.5) * 0.4, pos.y + 0.8, pos.z + (Math.random() - 0.5) * 0.4);
+            p.userData = {
+                vel: new THREE.Vector3((Math.random() - 0.5) * 0.4, 1.5 + Math.random(), (Math.random() - 0.5) * 0.4),
+                life: 1.0,
+                decay: 0.7,
+                rises: true // no gravity
+            };
+            this.scene.add(p);
+            this.particles.push(p);
+        }
+    }
+
     update(dt) {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
@@ -118,7 +135,7 @@ export class ParticleManager {
             u.life -= u.decay * dt;
 
             p.position.addScaledVector(u.vel, dt);
-            u.vel.y -= 9.8 * dt;
+            if (!u.rises) u.vel.y -= 9.8 * dt;
 
             if (u.rot) {
                 p.rotation.x += u.rot.x * dt;

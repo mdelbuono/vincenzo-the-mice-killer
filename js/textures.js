@@ -902,3 +902,107 @@ export function createPawFlagTexture() {
     });
     return new THREE.CanvasTexture(canvas);
 }
+
+// Underwater: rippled sea-floor sand with shells and pebbles
+export function createSandTexture() {
+    const [canvas, ctx] = makeCanvas();
+    ctx.fillStyle = '#d9c38f';
+    ctx.fillRect(0, 0, 512, 512);
+    // Ripples left by the current
+    for (let y = 0; y < 512; y += 18) {
+        ctx.strokeStyle = 'rgba(160,130,80,0.35)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let x = 0; x <= 512; x += 8) {
+            ctx.lineTo(x, y + Math.sin(x * 0.03 + y) * 4);
+        }
+        ctx.stroke();
+    }
+    for (let i = 0; i < 3000; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,245,210,0.5)' : 'rgba(140,110,60,0.35)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+    }
+    // Little pebbles and pink shells
+    for (let i = 0; i < 40; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        ctx.fillStyle = i % 3 ? '#a4917a' : '#ffb8c6';
+        ctx.beginPath();
+        ctx.ellipse(x, y, 4 + Math.random() * 3, 3, Math.random() * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    return repeatingTexture(canvas, 4, 3);
+}
+
+// Underwater: a wall of reef rock with patches of coral and algae
+export function createReefWallTexture() {
+    const [canvas, ctx] = makeCanvas();
+    ctx.fillStyle = '#3d5a6c';
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 160; i++) {
+        const shade = 50 + Math.random() * 50;
+        ctx.fillStyle = `rgb(${shade * 0.7}, ${shade * 1.05}, ${shade * 1.2})`;
+        ctx.beginPath();
+        ctx.ellipse(Math.random() * 512, Math.random() * 512, 20 + Math.random() * 40, 14 + Math.random() * 26, Math.random() * Math.PI, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    const coral = ['#ff7675', '#fd79a8', '#fdcb6e', '#a29bfe', '#55efc4'];
+    for (let i = 0; i < 70; i++) {
+        ctx.fillStyle = coral[i % coral.length];
+        ctx.globalAlpha = 0.75;
+        ctx.beginPath();
+        ctx.arc(Math.random() * 512, 300 + Math.random() * 212, 3 + Math.random() * 6, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // Algae hanging down from the top
+    for (let i = 0; i < 60; i++) {
+        ctx.strokeStyle = 'rgba(46,160,90,0.6)';
+        ctx.lineWidth = 3;
+        const x = Math.random() * 512;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.quadraticCurveTo(x + 10, 40, x - 4, 60 + Math.random() * 80);
+        ctx.stroke();
+    }
+    return repeatingTexture(canvas, 3, 1);
+}
+
+// Level 11 (the shop): price tag on the counter in front of every item
+export function createShopTagTexture(item, owned = false) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fffaf0';
+    ctx.strokeStyle = owned ? '#2ed573' : '#ffa502';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.rect(4, 4, 248, 120);
+    ctx.fill();
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#1a1a24';
+    ctx.font = 'bold 30px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(`${item.icon} ${item.name}`, 128, 42, 236);
+    ctx.fillStyle = owned ? '#218c4f' : '#d35400';
+    ctx.font = 'bold 34px "Segoe UI", system-ui, sans-serif';
+    ctx.fillText(owned ? 'OWNED ✓' : `🥫 ${item.price.toLocaleString('en-US')}`, 128, 90, 236);
+    return new THREE.CanvasTexture(canvas);
+}
+
+// Level 11 (the shop): a big icon on the front of a product box
+export function createIconTexture(icon, background = '#ffffff') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '84px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+    ctx.fillText(icon, 64, 70);
+    return new THREE.CanvasTexture(canvas);
+}

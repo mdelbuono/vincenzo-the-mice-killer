@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { buildOutfit, buildBlasterModel, buildSquirterModel } from './outfits.js';
+import { buildOutfit, buildBlasterModel, buildSquirterModel, buildCatArmyHornModel, buildDivingMask } from './outfits.js';
 import { createNameTagTexture } from './textures.js';
 
 // --- Vincenzo (The 3D Cat with Name Tag) ---
@@ -11,13 +11,15 @@ export const DEFAULT_CAT_APPEARANCE = {
     pattern: 'spots', // 'spots' (two spots near the tail), 'stripes' (tabby stripes in the spots color) or 'plain'
     outfits: [],
     blaster: false,
-    squirter: false
+    squirter: false,
+    catArmy: false // the golden Cat Army Horn
 };
 
 // Zero gravity (spaceship): the cat floats between the floor and this height
 const FLOAT_MAX_Y = 4.5;
 const FLOAT_SPEED = 4.0;      // up/down speed (Q / Z)
 const ZERO_G_FRICTION = 3.0;  // much less grip than on the floor, so the cat drifts
+const WATER_FRICTION = 6.0;   // underwater: the water slows the cat down a bit sooner
 
 export class Cat {
     constructor(scene, appearance = DEFAULT_CAT_APPEARANCE) {
@@ -234,6 +236,16 @@ export class Cat {
             blaster.position.set(0.36, 0.3, -0.1);
             this.bodyGroup.add(blaster);
         }
+        if (look.catArmy) {
+            const horn = buildCatArmyHornModel();
+            horn.scale.setScalar(0.6);
+            horn.position.set(0, 0.5, 0.35);
+            this.bodyGroup.add(horn);
+        }
+        // Underwater the cat wears a diving mask (shown by update())
+        this.divingMask = buildDivingMask();
+        this.divingMask.visible = false;
+        this.headGroup.add(this.divingMask);
         if (look.squirter) {
             const squirter = buildSquirterModel();
             squirter.position.set(-0.36, 0.3, -0.1);
@@ -325,6 +337,8 @@ export class Cat {
 
     update(dt, input, room) {
         const zeroG = room.zeroGravity;
+        const swimming = room.underwater;
+        this.divingMask.visible = swimming;
         if (input.sprint && this.stamina > 10 && (input.forward || input.backward)) {
             this.isSprinting = true;
             this.stamina = Math.max(0, this.stamina - 30 * dt);
@@ -355,7 +369,7 @@ export class Cat {
         } else if (input.backward) {
             this.speed = Math.max(-topSpeed * 0.5, this.speed - this.acceleration * dt);
         } else {
-            const friction = zeroG ? ZERO_G_FRICTION : this.friction;
+            const friction = swimming ? WATER_FRICTION : (zeroG ? ZERO_G_FRICTION : this.friction);
             if (this.speed > 0) {
                 this.speed = Math.max(0, this.speed - friction * dt);
             } else if (this.speed < 0) {
@@ -396,10 +410,18 @@ export class Cat {
         const floatBob = zeroG ? Math.sin(Date.now() * 0.002) * 0.12 : 0;
         this.mesh.position.set(this.position.x, this.position.y + leapY + floatBob, this.position.z);
         this.mesh.rotation.y = this.rotationY;
-        this.mesh.rotation.z = zeroG ? Math.sin(Date.now() * 0.0013) * 0.15 : 0;
+        this.mesh.rotation.z = zeroG && !swimming ? Math.sin(Date.now() * 0.0013) * 0.15 : 0;
 
         const isMoving = Math.abs(this.speed) > 0.1;
-        if (zeroG) {
+        if (swimming) {
+            // Doggy paddle: quick strokes, faster when swimming forward
+            const paddle = Math.sin(Date.now() * (isMoving ? 0.014 : 0.006)) * 0.8;
+            this.legs[0].group.rotation.x = -0.4 + paddle;
+            this.legs[1].group.rotation.x = -0.4 - paddle;
+            this.legs[2].group.rotation.x = 0.8 - paddle * 0.6;
+            this.legs[3].group.rotation.x = 0.8 + paddle * 0.6;
+            this.bodyGroup.position.y = 0.55;
+        } else if (zeroG) {
             // Paws paddling slowly in the air
             const paddle = Math.sin(Date.now() * 0.004) * 0.5;
             this.legs[0].group.rotation.x = -0.6 + paddle;

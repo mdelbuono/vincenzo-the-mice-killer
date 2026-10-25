@@ -535,3 +535,46 @@ export function buildSquirterModel() {
     g.traverse(o => { if (o.isMesh) o.castShadow = true; });
     return g;
 }
+
+// The golden "Cat Army Horn" (the most expensive item in the shop), hung on the cat once bought.
+export function buildCatArmyHornModel() {
+    const g = new THREE.Group();
+    const gold = new THREE.MeshStandardMaterial({ color: 0xf1c40f, metalness: 0.9, roughness: 0.2, emissive: 0x7a5c00, emissiveIntensity: 0.3 });
+    const tube = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.05, 8, 24, Math.PI * 1.3), gold);
+    tube.rotation.y = Math.PI / 2;
+    const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.05, 0.4, 16, 1, true), gold);
+    bell.material.side = THREE.DoubleSide;
+    // The bell sits at the end of the curved tube, opening forward
+    const end = Math.PI * 1.3;
+    bell.position.set(0, Math.sin(end) * 0.28, Math.cos(end) * 0.28 - 0.15);
+    bell.rotation.x = -Math.PI / 2 - 0.4;
+    const mouthpiece = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.06, 0.14, 10), gold);
+    mouthpiece.position.set(0, 0.06, 0.29);
+    mouthpiece.rotation.x = Math.PI / 2;
+    const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 8), new THREE.MeshStandardMaterial({ color: 0xd63031, roughness: 0.7 }));
+    tassel.position.set(0, -0.36, 0);
+    g.add(tube, bell, mouthpiece, tassel);
+    g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    return g;
+}
+
+// Diving mask with a snorkel, worn automatically underwater (head space, like the outfits)
+export function buildDivingMask() {
+    const g = new THREE.Group();
+    const strap = new THREE.MeshStandardMaterial({ color: 0x2f3542, roughness: 0.6 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x9be7ff, transparent: true, opacity: 0.45, roughness: 0.05, metalness: 0.3 });
+    const frame = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.04, 8, 20), new THREE.MeshStandardMaterial({ color: 0xff9f43, roughness: 0.4 }));
+    frame.scale.set(1.5, 1, 1);
+    frame.position.set(0, 0.08, -0.4);
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.2, 20), glass);
+    lens.scale.set(1.5, 1, 1);
+    lens.position.set(0, 0.08, -0.41);
+    lens.rotation.y = Math.PI;
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.025, 6, 24), strap);
+    band.rotation.x = Math.PI / 2;
+    band.position.y = 0.08;
+    const snorkel = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.7, 8), new THREE.MeshStandardMaterial({ color: 0xffd32a, roughness: 0.4 }));
+    snorkel.position.set(0.36, 0.35, -0.1);
+    g.add(frame, lens, band, snorkel);
+    return g;
+}

@@ -337,6 +337,44 @@ export class SoundEngine {
         this.playNoise(0.6, 400, 4000, 0.2);
     }
 
+    // Cat Army Horn: a brassy "ta-ta-taaa!" fanfare
+    playCatArmy() {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        [[392, 0, 0.14], [392, 0.16, 0.14], [523.25, 0.32, 0.6]].forEach(([freq, start, len]) => {
+            [1, 1.5].forEach(harmonic => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq * harmonic, t + start);
+                gain.gain.setValueAtTime(0.0001, t + start);
+                gain.gain.exponentialRampToValueAtTime(harmonic === 1 ? 0.14 : 0.05, t + start + 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + start + len);
+                osc.connect(gain);
+                gain.connect(this.sfxGain);
+                osc.start(t + start);
+                osc.stop(t + start + len + 0.02);
+            });
+        });
+    }
+
+    // Underwater: a little rising bubble blip
+    playBubble() {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300 + Math.random() * 200, t);
+        osc.frequency.exponentialRampToValueAtTime(1200 + Math.random() * 400, t + 0.12);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    }
+
     startBackgroundMusic() {
         if (this.musicInterval) return;
         const chords = [

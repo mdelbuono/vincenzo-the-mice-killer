@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { sound } from './sound.js';
+import { CatArmy } from './catarmy.js';
 
 // Yarn Ball Bomb: lands this far ahead (or on the mouse it aims at) and tangles every mouse nearby
 const YARN_RANGE = 12;
@@ -30,6 +31,8 @@ export class AbilityManager {
         this.traps = [];
         this.blasterCooldown = 0;
         this.squirtCooldown = 0;
+        this.recharge = {};     // itemId -> seconds until a reusable weapon (the Cat Army Horn) works again
+        this.catArmy = new CatArmy(game);
         this.pelletGeo = new THREE.SphereGeometry(0.14, 8, 8);
         this.pelletMat = new THREE.MeshBasicMaterial({ color: 0xffa502 });
 
@@ -39,9 +42,9 @@ export class AbilityManager {
 
     get shop() { return this.game.shop; }
 
-    // Shop items that can be used during a hunt (boosts and weapon ammo)
+    // Shop items that can be used during a hunt (boosts, weapon ammo, and weapons with a key that never run out)
     usableItems() {
-        return this.shop.catalog.items.filter(i => i.key && (i.type === 'boost' || i.type === 'ammo'));
+        return this.shop.catalog.items.filter(i => i.key && (i.type === 'boost' || i.type === 'ammo' || i.type === 'unlock'));
     }
 
     // Returns true if the key belongs to an ability
@@ -63,7 +66,11 @@ export class AbilityManager {
             g.showToast(`You need the ${needed ? needed.name : item.requires}! 🛒`);
             return;
         }
-        if (this.shop.count(itemId) <= 0) {
+        if (item.type === 'unlock' && !this.shop.isOwned(itemId)) {
+            g.showToast(`Buy the ${item.name} in the 🛒 Shop first!`);
+            return;
+        }
+        if (item.type !== 'unlock' && this.shop.count(itemId) <= 0) {
             g.showToast(`No ${item.name} left! Visit the 🛒 Shop`);
             return;
         }
@@ -113,6 +120,17 @@ export class AbilityManager {
             if (this.squirtCooldown > 0) return;
             this.shop.consume(itemId);
             this.squirt();
+        } else if (item.weapon === 'catArmy') {
+            if (this.catArmy.active) {
+                g.showToast('The Cat Army is already hunting! 📯');
+                return;
+            }
+            if (this.recharge[itemId] > 0) {
+                g.showToast(`The horn is out of breath: ${Math.ceil(this.recharge[itemId])}s left 📯`);
+                return;
+            }
+            this.recharge[itemId] = (item.duration || 30) + (item.recharge || 60);
+            this.catArmy.summon(item);
         }
         this.updateBarTimers();
     }
@@ -351,6 +369,14 @@ export class AbilityManager {
 
         if (this.blasterCooldown > 0) this.blasterCooldown -= dt;
         if (this.squirtCooldown > 0) this.squirtCooldown -= dt;
+        for (const id of Object.keys(this.recharge)) {
+            this.recharge[id] -= dt;
+            if (this.recharge[id] <= 0) delete this.recharge[id];
+        }
+
+        // Helper cats hunting on their own (may finish the level)
+        this.catArmy.update(dt);
+        if (!g.isRunning) return;
 
         for (let i = this.pellets.length - 1; i >= 0; i--) {
             const p = this.pellets[i];
@@ -412,7 +438,8 @@ export class AbilityManager {
         this.updateBarTimers();
     }
 
-    // Removes flying pellets, yarn balls and traps (level end, or moving to another room)
+    // Removes flying pellets, yarn balls and traps (level end, or moving to another room;
+    // the Cat Army comes along to the next room, see CatArmy.regroup())
     clearProjectiles() {
         while (this.pellets.length > 0) this.removePellet(0);
         while (this.traps.length > 0) this.removeTrap(0);
@@ -423,6 +450,8 @@ export class AbilityManager {
     // Ends active boosts and clears pellets, yarn balls and traps (between levels)
     reset() {
         this.activeBoosts = {};
+        this.recharge = {};
+        this.catArmy.dismiss();
         this.clearProjectiles();
         this.blasterCooldown = 0;
         this.squirtCooldown = 0;
@@ -437,7 +466,9 @@ export class AbilityManager {
         this.slots = {};
         for (const item of this.usableItems()) {
             if (item.requires && !this.shop.isOwned(item.requires)) continue;
-            if (this.shop.count(item.id) <= 0 && !(this.activeBoosts[item.id] > 0)) continue;
+            if (item.type === 'unlock') {
+                if (!this.shop.isOwned(item.id)) continue;
+            } else if (this.shop.count(item.id) <= 0 && !(this.activeBoosts[item.id] > 0)) continue;
 
             const btn = document.createElement('button');
             btn.className = 'powerup-btn';
@@ -456,6 +487,15 @@ export class AbilityManager {
     updateBarTimers() {
         for (const id of Object.keys(this.slots)) {
             const slot = this.slots[id];
+            const item = this.shop.itemsById[id];
+            if (item && item.type === 'unlock') {
+                // Never runs out: shows the time left while the army hunts, then the recharge
+                const hunting = item.weapon === 'catArmy' && this.catArmy.active;
+                slot.btn.classList.toggle('active', hunting);
+                slot.countEl.textContent = hunting ? `${Math.ceil(this.catArmy.timeLeft)}s`
+                    : (this.recharge[id] > 0 ? `⏳${Math.ceil(this.recharge[id])}` : 'GO!');
+                continue;
+            }
             const remaining = this.activeBoosts[id];
             slot.btn.classList.toggle('active', remaining > 0);
             slot.countEl.textContent = remaining > 0 ? `${Math.ceil(remaining)}s` : `x${this.shop.count(id)}`;

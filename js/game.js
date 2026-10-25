@@ -21,7 +21,8 @@ const PASSAGE_NAMES = {
     stairs: '🪜 Stairs',
     path: '🌼 Garden Path',
     road: '🛣️ Road',
-    teleport: '🌀 Teleporter'
+    teleport: '🌀 Teleporter',
+    dive: '🐠 Aquarium Tunnel'
 };
 
 // A wall spot for an automatically added door, away from the doors already there
@@ -66,21 +67,30 @@ class VincenzoGame {
 
         // Default level configs (fallback if fetch fails or before fetch resolves)
         this.levelConfigs = {
-            1: { id: 1, icon: '🛋️', name: 'Living Room', environment: 'environments/living_room.json', target: 10, duration: 180, time: 180, miceCount: 3, speedMult: 1.0, brokjesPerMouse: 10, completionBrokjes: 50, goldenMouseChance: 0.12, goldenMouseBrokjes: 50, clearIcon: '🎉 🛋️', clearTitle: 'Level 1 Cleared!', clearMsg: 'Living Room is clear! But mice are scurrying upstairs in the dusty Attic!', nextBtnText: 'Enter Level 2: The Attic (15 Mice)' },
-            2: { id: 2, icon: '📦', name: 'The Attic', environment: 'environments/attic.json', target: 15, duration: 150, time: 150, miceCount: 5, speedMult: 1.2, brokjesPerMouse: 10, completionBrokjes: 100, goldenMouseChance: 0.12, goldenMouseBrokjes: 60, clearIcon: '📦 🌟', clearTitle: 'Level 2 Cleared!', clearMsg: 'The Attic is safe! But a massive infestation is swarming in the dark Basement!', nextBtnText: 'Enter Level 3: The Basement (20 Mice)' },
-            3: { id: 3, icon: '🛢️', name: 'The Basement', environment: 'environments/basement.json', target: 20, duration: 120, time: 120, miceCount: 6, speedMult: 1.35, brokjesPerMouse: 10, completionBrokjes: 200, goldenMouseChance: 0.15, goldenMouseBrokjes: 80, clearIcon: '🔥 🛢️', clearTitle: 'Level 3 Cleared!', clearMsg: 'The Basement is quiet! But a hungry gang of mice has raided the Kitchen and is going after the cheese!', nextBtnText: 'Enter Level 4: The Kitchen (25 Mice)' },
-            4: { id: 4, icon: '🍳', name: 'The Kitchen', environment: 'environments/kitchen.json', target: 25, duration: 120, time: 120, miceCount: 8, speedMult: 1.5, brokjesPerMouse: 10, completionBrokjes: 300, goldenMouseChance: 0.18, goldenMouseBrokjes: 100, clearIcon: '🧀 🍳', clearTitle: 'Level 4 Cleared!', clearMsg: "The Kitchen is safe! But it's bedtime and an army of mice is sneaking into the dark Bedroom!", nextBtnText: 'Enter Level 5: The Bedroom (30 Mice)' },
-            5: { id: 5, icon: '🛏️', name: 'The Bedroom', environment: 'environments/bedroom.json', target: 30, duration: 120, time: 120, miceCount: 10, speedMult: 1.65, brokjesPerMouse: 10, completionBrokjes: 400, goldenMouseChance: 0.2, goldenMouseBrokjes: 120, clearIcon: '🌙 🛏️', clearTitle: 'Level 5 Cleared!', clearMsg: 'The whole house is mouse-free! But the mice have escaped outside into the sunny Backyard!', nextBtnText: 'Enter Level 6: The Backyard (30 Mice)' },
-            6: { id: 6, icon: '🌳', name: 'The Backyard', environment: 'environments/backyard.json', target: 30, duration: 120, time: 120, miceCount: 10, speedMult: 1.7, brokjesPerMouse: 12, completionBrokjes: 500, goldenMouseChance: 0.2, goldenMouseBrokjes: 130, clearIcon: '🌳 🐶', clearTitle: 'Level 6 Cleared!', clearMsg: 'The Backyard is safe! But the mice ran off to hide in the creepy Abandoned Workshop down the road!', nextBtnText: 'Enter Level 7: The Abandoned Workshop (32 Mice)' },
-            7: { id: 7, icon: '🔧', name: 'The Abandoned Workshop', environment: 'environments/workshop.json', target: 32, duration: 120, time: 120, miceCount: 11, speedMult: 1.75, brokjesPerMouse: 12, completionBrokjes: 600, goldenMouseChance: 0.2, goldenMouseBrokjes: 140, clearIcon: '🔧 🚗', clearTitle: 'Level 7 Cleared!', clearMsg: 'The Workshop is quiet again! But the mice smelled cheese and invaded the Supermarket!', nextBtnText: 'Enter Level 8: The Supermarket (35 Mice)' },
-            8: { id: 8, icon: '🛒', name: 'The Supermarket', environment: 'environments/supermarket.json', target: 35, duration: 120, time: 120, miceCount: 12, speedMult: 1.85, brokjesPerMouse: 12, completionBrokjes: 750, goldenMouseChance: 0.22, goldenMouseBrokjes: 150, clearIcon: '🛒 🧀', clearTitle: 'Level 8 Cleared!', clearMsg: 'The Supermarket is clean! But the mice stowed away on a Boat sailing out to sea!', nextBtnText: 'Enter Level 9: The Boat (38 Mice)' },
-            9: { id: 9, icon: '⛵', name: 'The Boat', environment: 'environments/boat.json', target: 38, duration: 130, time: 130, miceCount: 12, speedMult: 1.9, brokjesPerMouse: 15, completionBrokjes: 900, goldenMouseChance: 0.22, goldenMouseBrokjes: 160, clearIcon: '⛵ 🌊', clearTitle: 'Level 9 Cleared!', clearMsg: 'The Boat is safe! But the last mice took off in a rocket to a Spaceship... without gravity!', nextBtnText: 'Enter Level 10: The Spaceship (40 Mice)' },
-            10: { id: 10, icon: '🚀', name: 'The Spaceship', environment: 'environments/spaceship.json', target: 40, duration: 150, time: 150, miceCount: 12, speedMult: 1.8, brokjesPerMouse: 15, completionBrokjes: 1200, goldenMouseChance: 0.25, goldenMouseBrokjes: 200, clearIcon: '👑 🚀 🐱', clearTitle: 'GALACTIC CHAMPION VINCENZO!', clearMsg: 'All 10 levels conquered! From the living room to outer space, Vincenzo is the greatest mouse hunter in the universe!', nextBtnText: 'Play Again from Level 1' }
+            1: { id: 1, icon: '🛋️', name: 'Living Room', environment: 'environments/living_room.json', target: 13, duration: 180, time: 180, miceCount: 3, speedMult: 1.1, brokjesPerMouse: 10, completionBrokjes: 50, goldenMouseChance: 0.12, goldenMouseBrokjes: 50, clearIcon: '🎉 🛋️', clearTitle: 'Level 1 Cleared!', clearMsg: 'Living Room is clear! But mice are scurrying upstairs in the dusty Attic!', nextBtnText: 'Enter Level 2: The Attic (18 Mice)' },
+            2: { id: 2, icon: '📦', name: 'The Attic', environment: 'environments/attic.json', target: 18, duration: 150, time: 150, miceCount: 5, speedMult: 1.3, brokjesPerMouse: 10, completionBrokjes: 100, goldenMouseChance: 0.12, goldenMouseBrokjes: 60, clearIcon: '📦 🌟', clearTitle: 'Level 2 Cleared!', clearMsg: 'The Attic is safe! But a massive infestation is swarming in the dark Basement!', nextBtnText: 'Enter Level 3: The Basement (23 Mice)' },
+            3: { id: 3, icon: '🛢️', name: 'The Basement', environment: 'environments/basement.json', target: 23, duration: 120, time: 120, miceCount: 6, speedMult: 1.45, brokjesPerMouse: 10, completionBrokjes: 200, goldenMouseChance: 0.15, goldenMouseBrokjes: 80, clearIcon: '🔥 🛢️', clearTitle: 'Level 3 Cleared!', clearMsg: 'The Basement is quiet! But a hungry gang of mice has raided the Kitchen and is going after the cheese!', nextBtnText: 'Enter Level 4: The Kitchen (28 Mice)' },
+            4: { id: 4, icon: '🍳', name: 'The Kitchen', environment: 'environments/kitchen.json', target: 28, duration: 120, time: 120, miceCount: 8, speedMult: 1.6, brokjesPerMouse: 10, completionBrokjes: 300, goldenMouseChance: 0.18, goldenMouseBrokjes: 100, clearIcon: '🧀 🍳', clearTitle: 'Level 4 Cleared!', clearMsg: "The Kitchen is safe! But it's bedtime and an army of mice is sneaking into the dark Bedroom!", nextBtnText: 'Enter Level 5: The Bedroom (33 Mice)' },
+            5: { id: 5, icon: '🛏️', name: 'The Bedroom', environment: 'environments/bedroom.json', target: 33, duration: 120, time: 120, miceCount: 10, speedMult: 1.75, brokjesPerMouse: 10, completionBrokjes: 400, goldenMouseChance: 0.2, goldenMouseBrokjes: 120, clearIcon: '🌙 🛏️', clearTitle: 'Level 5 Cleared!', clearMsg: 'The whole house is mouse-free! But the mice have escaped outside into the sunny Backyard!', nextBtnText: 'Enter Level 6: The Backyard (34 Mice)' },
+            6: { id: 6, icon: '🌳', name: 'The Backyard', environment: 'environments/backyard.json', target: 34, duration: 120, time: 120, miceCount: 10, speedMult: 1.8, brokjesPerMouse: 12, completionBrokjes: 500, goldenMouseChance: 0.2, goldenMouseBrokjes: 130, clearIcon: '🌳 🐶', clearTitle: 'Level 6 Cleared!', clearMsg: 'The Backyard is safe! But the mice ran off to hide in the creepy Abandoned Workshop down the road!', nextBtnText: 'Enter Level 7: The Abandoned Workshop (36 Mice)' },
+            7: { id: 7, icon: '🔧', name: 'The Abandoned Workshop', environment: 'environments/workshop.json', target: 36, duration: 120, time: 120, miceCount: 11, speedMult: 1.85, brokjesPerMouse: 12, completionBrokjes: 600, goldenMouseChance: 0.2, goldenMouseBrokjes: 140, clearIcon: '🔧 🚗', clearTitle: 'Level 7 Cleared!', clearMsg: 'The Workshop is quiet again! But the mice smelled cheese and invaded the Supermarket!', nextBtnText: 'Enter Level 8: The Supermarket (39 Mice)' },
+            8: { id: 8, icon: '🛒', name: 'The Supermarket', environment: 'environments/supermarket.json', target: 39, duration: 120, time: 120, miceCount: 12, speedMult: 1.95, brokjesPerMouse: 12, completionBrokjes: 750, goldenMouseChance: 0.22, goldenMouseBrokjes: 150, clearIcon: '🛒 🧀', clearTitle: 'Level 8 Cleared!', clearMsg: 'The Supermarket is clean! But the mice stowed away on a Boat sailing out to sea!', nextBtnText: 'Enter Level 9: The Boat (42 Mice)' },
+            9: { id: 9, icon: '⛵', name: 'The Boat', environment: 'environments/boat.json', target: 42, duration: 130, time: 130, miceCount: 12, speedMult: 2.0, brokjesPerMouse: 15, completionBrokjes: 900, goldenMouseChance: 0.22, goldenMouseBrokjes: 160, clearIcon: '⛵ 🌊', clearTitle: 'Level 9 Cleared!', clearMsg: 'The Boat is safe! But the last mice took off in a rocket to a Spaceship... without gravity!', nextBtnText: 'Enter Level 10: The Spaceship (44 Mice)' },
+            10: { id: 10, icon: '🚀', name: 'The Spaceship', environment: 'environments/spaceship.json', target: 44, duration: 150, time: 150, miceCount: 12, speedMult: 1.9, brokjesPerMouse: 15, completionBrokjes: 1200, goldenMouseChance: 0.25, goldenMouseBrokjes: 200, clearIcon: '🚀 ⭐', clearTitle: 'Level 10 Cleared!', clearMsg: 'The Spaceship is safe! The mice beamed back to Earth... and broke into the Brokjes Shop!', nextBtnText: 'Enter Level 11: The Brokjes Shop (46 Mice)' },
+            11: { id: 11, icon: '🏪', name: 'The Brokjes Shop', startRoom: 'shop_cats', target: 46, duration: 180, time: 180, miceCount: 12, speedMult: 2.0, brokjesPerMouse: 15, completionBrokjes: 1400, goldenMouseChance: 0.22, goldenMouseBrokjes: 200, clearIcon: '🏪 🛒', clearTitle: 'Level 11 Cleared!', clearMsg: 'The Brokjes Shop is safe! But the last mice jumped into the sea and swam all the way to the bottom!', nextBtnText: 'Enter Level 12: Under the Sea (48 Mice)', rooms: {
+                shop_cats: { name: 'Cat Gallery', icon: '🐱', environment: 'environments/shop_cats.json', place: 'town', doors: [{ wall: 'east', at: 0, to: 'shop_boosts', passage: 'corridor' }, { wall: 'south', at: -8, to: 'shop_surprises', passage: 'corridor' }] },
+                shop_boosts: { name: 'Boost Bar', icon: '⚡', environment: 'environments/shop_boosts.json', place: 'town', speedMult: 2.1, doors: [{ wall: 'west', at: 0, to: 'shop_cats', passage: 'corridor' }, { wall: 'east', at: 0, to: 'shop_weapons', passage: 'corridor' }] },
+                shop_weapons: { name: 'Weapon Vault', icon: '🤧', environment: 'environments/shop_weapons.json', place: 'town', doors: [{ wall: 'west', at: 0, to: 'shop_boosts', passage: 'corridor' }, { wall: 'south', at: 0, to: 'shop_clothes', passage: 'corridor' }] },
+                shop_clothes: { name: 'Fashion Boutique', icon: '🎩', environment: 'environments/shop_clothes.json', place: 'town', miceCount: 13, doors: [{ wall: 'north', at: 0, to: 'shop_weapons', passage: 'corridor' }, { wall: 'west', at: 0, to: 'shop_surprises', passage: 'corridor' }] },
+                shop_surprises: { name: 'Surprise Corner', icon: '🎁', environment: 'environments/shop_surprises.json', place: 'town', goldenMouseChance: 0.45, goldenMouseBrokjes: 250, doors: [{ wall: 'east', at: 0, to: 'shop_clothes', passage: 'corridor' }, { wall: 'north', at: -8, to: 'shop_cats', passage: 'corridor' }] }
+            } },
+            12: { id: 12, icon: '🐠', name: 'Under the Sea', environment: 'environments/underwater.json', target: 48, duration: 150, time: 150, miceCount: 13, speedMult: 2.0, brokjesPerMouse: 18, completionBrokjes: 1800, goldenMouseChance: 0.25, goldenMouseBrokjes: 250, clearIcon: '👑 🐠 🐱', clearTitle: 'OCEAN AND GALAXY CHAMPION!', clearMsg: 'All 12 levels conquered! From the living room to outer space and the bottom of the sea, Vincenzo is the greatest mouse hunter of all time!', nextBtnText: 'Play Again from Level 1' }
         };
 
-        // Endless mode: a house of rooms connected by doors (endless.json)
+        // Endless mode: a house of rooms connected by doors (endless.json).
+        // A level can have several rooms too ("rooms" in levels.json), connected the same way.
         this.endlessConfig = null;
-        this.endlessRoomId = null;
+        this.roomId = null;        // current room of the endless house or of a multi-room level
         this.roomChanging = false; // true while the next room is loading
         this.doorCooldown = 0;
         this.roomsVisited = 0;
@@ -150,6 +160,7 @@ class VincenzoGame {
 
     initWorld() {
         this.room = new LevelEnvironment(this.scene);
+        this.room.shop = this.shop; // the shop level shows the shop's items
         // Initial build without a config — environment will load once levelConfigs are fetched
         this.room.buildLevel(1, null);
 
@@ -284,14 +295,31 @@ class VincenzoGame {
 
     get isEndless() { return this.mode === 'endless'; }
 
-    // Settings of what is being played: the current level, or the current room of the endless house
+    // Settings of what is being played: the current level, or the current room of the endless house.
+    // The rooms of a multi-room level may override the level's mouse settings (but keep its name).
     levelConfig() {
         if (this.isEndless && this.endlessConfig) {
-            const room = this.endlessConfig.rooms[this.endlessRoomId] || {};
+            const room = this.endlessConfig.rooms[this.roomId] || {};
             const { rooms, doors, ...shared } = { ...this.endlessConfig, ...room };
             return shared;
         }
-        return this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
+        const level = this.levelConfigs[this.currentLevel] || this.levelConfigs[String(this.currentLevel)];
+        const room = level && level.rooms && level.rooms[this.roomId];
+        if (!room) return level;
+        const { rooms, doors, ...shared } = { ...level, ...room, name: level.name, icon: level.icon };
+        return shared;
+    }
+
+    // The rooms that doors lead between: the endless house, a multi-room level, or null (one room)
+    worldRooms() {
+        if (this.isEndless) return this.endlessConfig && this.endlessConfig.rooms;
+        const level = this.levelConfigs[this.currentLevel];
+        return (level && level.rooms) || null;
+    }
+
+    // Start of the HUD title: "♾️ Endless" or "Level 11"
+    hudPrefix() {
+        return this.isEndless ? '♾️ Endless' : `Level ${this.currentLevel}`;
     }
 
     sortedLevels() {
@@ -523,26 +551,34 @@ class VincenzoGame {
     async startLevel(lvl) {
         this.mode = 'levels';
         this.currentLevel = lvl;
+        this.roomId = null;
         const cfg = this.levelConfig();
         if (!cfg) return;
         this.passage = null;
         this.shop.nextLevel = lvl; // the start screen offers this level again next time
 
-        // Build Room Environment for this level (async — loads external env JSON)
-        await this.room.buildLevel(lvl, cfg);
-
         this.timeLeft = cfg.duration || cfg.time || 180;
         this.resetHunt();
-        this.placeCat(0, 2, 0);
-        this.respawnMice();
+        if (cfg.rooms) {
+            // A level with several rooms: walk through the doors like in endless mode
+            this.roomsVisited = 0;
+            this.foundSecrets.clear();
+            await this.enterRoom(cfg.startRoom || Object.keys(cfg.rooms)[0], null);
+        } else {
+            // Build Room Environment for this level (async — loads external env JSON)
+            await this.room.buildLevel(lvl, cfg);
+            this.placeCat(0, 2, 0);
+            this.respawnMice();
+            this.hud.levelName.textContent = `Level ${lvl}: ${cfg.name}`;
+            this.hud.radarRoomTitle.textContent = cfg.name;
+        }
         this.beginHunt();
 
-        this.hud.levelName.textContent = `Level ${lvl}: ${cfg.name}`;
-        this.hud.radarRoomTitle.textContent = cfg.name;
         this.updateHUD();
-        this.showToast(this.room.zeroGravity
-            ? `LEVEL ${lvl}: ZERO GRAVITY! Q = UP, Z = DOWN 🚀`
-            : `LEVEL ${lvl}: ${cfg.name.toUpperCase()}! 🐾`);
+        if (this.room.underwater) this.showToast(`LEVEL ${lvl}: UNDERWATER! Q = SWIM UP, Z = SWIM DOWN 🫧`);
+        else if (this.room.zeroGravity) this.showToast(`LEVEL ${lvl}: ZERO GRAVITY! Q = UP, Z = DOWN 🚀`);
+        else if (cfg.rooms) this.showToast(`LEVEL ${lvl}: ${cfg.name.toUpperCase()}! WALK THROUGH THE DOORS 🚪`);
+        else this.showToast(`LEVEL ${lvl}: ${cfg.name.toUpperCase()}! 🐾`);
     }
 
     // Endless mode: no clock, no target, roam the house room by room
@@ -560,42 +596,62 @@ class VincenzoGame {
     /**
      * Every level's environment is also a room in endless mode. Rooms missing
      * from endless.json (a newly added level) are added here, with a door to
-     * and from the room of the level before.
+     * and from the room of the level before. A level with several rooms brings
+     * all of them, with the doors between them.
      */
     syncEndlessRooms() {
         if (this.endlessSynced) return;
         this.endlessSynced = true;
         const rooms = this.endlessConfig.rooms;
+        const findRoom = environment => Object.keys(rooms).find(key => rooms[key].environment === environment);
+        const freeId = id => { while (rooms[id]) id += '_'; return id; };
+        const link = (a, b) => {
+            rooms[a].doors.push({ ...freeDoorSpot(rooms[a].doors), to: b });
+            rooms[b].doors.push({ ...freeDoorSpot(rooms[b].doors), to: a });
+        };
         let previous = this.endlessConfig.startRoom;
         this.sortedLevels().forEach(lvl => {
             const cfg = this.levelConfigs[lvl];
+            if (cfg.rooms) {
+                const startKey = cfg.startRoom || Object.keys(cfg.rooms)[0];
+                let id = findRoom(cfg.rooms[startKey].environment);
+                if (!id) {
+                    const ids = {};
+                    Object.keys(cfg.rooms).forEach(key => { ids[key] = freeId(key); rooms[ids[key]] = {}; });
+                    Object.entries(cfg.rooms).forEach(([key, room]) => {
+                        rooms[ids[key]] = { place: 'house', floor: 0, ...room, doors: (room.doors || []).map(d => ({ ...d, to: ids[d.to] })) };
+                    });
+                    id = ids[startKey];
+                    link(previous, id);
+                }
+                previous = id;
+                return;
+            }
             if (!cfg.environment) return;
-            let id = Object.keys(rooms).find(key => rooms[key].environment === cfg.environment);
+            let id = findRoom(cfg.environment);
             if (!id) {
-                id = cfg.environment.replace(/^.*\//, '').replace(/\.json$/, '');
-                while (rooms[id]) id += '_';
+                id = freeId(cfg.environment.replace(/^.*\//, '').replace(/\.json$/, ''));
                 rooms[id] = { name: cfg.name.replace(/^The /, ''), icon: cfg.icon || '🚪', environment: cfg.environment, place: 'house', floor: 0, doors: [] };
-                rooms[previous].doors.push({ ...freeDoorSpot(rooms[previous].doors), to: id });
-                rooms[id].doors.push({ ...freeDoorSpot(rooms[id].doors), to: previous });
+                link(previous, id);
             }
             previous = id;
         });
     }
 
     roomInfo(roomId) {
-        const room = this.endlessConfig.rooms[roomId];
+        const room = this.worldRooms()[roomId];
         return { id: roomId, label: room ? `${room.icon} ${room.name}` : roomId, place: room && room.place, floor: room && room.floor };
     }
 
     // The passage behind a door: the door's own "passage", or one that fits the two rooms
     passageOf(fromRoomId, door) {
-        const rooms = this.endlessConfig.rooms;
+        const rooms = this.worldRooms();
         return door.passage || passageType(rooms[fromRoomId], rooms[door.to]);
     }
 
     passageName(type, fromRoomId, toRoomId) {
         if (type !== 'stairs') return PASSAGE_NAMES[type];
-        const rooms = this.endlessConfig.rooms;
+        const rooms = this.worldRooms();
         return (rooms[toRoomId].floor || 0) > (rooms[fromRoomId].floor || 0) ? '🪜 Stairs Up' : '🪜 Stairs Down';
     }
 
@@ -616,17 +672,17 @@ class VincenzoGame {
     }
 
     /**
-     * Endless mode: loads another room of the house. The cat comes in through
-     * the door that leads back to the room it came from.
+     * Endless mode (or a multi-room level): loads another room. The cat comes in
+     * through the door that leads back to the room it came from.
      */
     async enterRoom(roomId, fromRoomId) {
-        const roomCfg = this.endlessConfig.rooms[roomId];
+        const roomCfg = this.worldRooms()[roomId];
         if (!roomCfg) return;
         this.roomChanging = true;
         this.abilities.clearProjectiles();
         if (fromRoomId) await this.fade(true);
         this.passage = null;
-        this.endlessRoomId = roomId;
+        this.roomId = roomId;
 
         await this.room.buildLevel(0, { environment: roomCfg.environment });
         this.room.addDoors(roomCfg.doors.map(d => ({
@@ -648,8 +704,9 @@ class VincenzoGame {
         this.respawnMice();
         this.roomsVisited++;
         this.doorCooldown = 1.0;
+        this.abilities.catArmy.regroup(); // the Cat Army comes along
 
-        this.hud.levelName.textContent = `♾️ Endless: ${roomCfg.name}`;
+        this.hud.levelName.textContent = `${this.hudPrefix()}: ${roomCfg.name}`;
         this.hud.radarRoomTitle.textContent = roomCfg.name;
         this.updateHUD();
         if (fromRoomId) sound.playDoor();
@@ -658,13 +715,13 @@ class VincenzoGame {
     }
 
     /**
-     * Endless mode: walking through a door leads into a passage (hallway, stairs,
-     * garden path, road or teleporter). Its west door goes back, its east door
-     * leads on to the next room.
+     * Endless mode (or a multi-room level): walking through a door leads into a
+     * passage (hallway, stairs, garden path, road, teleporter or aquarium tunnel).
+     * Its west door goes back, its east door leads on to the next room.
      */
     async enterPassage(fromRoomId, door) {
         const toRoomId = door.to;
-        if (!this.endlessConfig.rooms[toRoomId]) return;
+        if (!this.worldRooms()[toRoomId]) return;
         this.roomChanging = true;
         this.abilities.clearProjectiles();
         const type = this.passageOf(fromRoomId, door);
@@ -680,9 +737,10 @@ class VincenzoGame {
         this.snapCamera = true;
         this.doorCooldown = 0.5;
         this.roomChanging = false;
+        this.abilities.catArmy.regroup();
 
         const name = this.passageName(type, fromRoomId, toRoomId);
-        this.hud.levelName.textContent = `♾️ Endless: ${name}`;
+        this.hud.levelName.textContent = `${this.hudPrefix()}: ${name}`;
         this.hud.radarRoomTitle.textContent = name;
         this.updateHUD();
         if (type === 'teleport') sound.playTeleport();
@@ -983,7 +1041,7 @@ class VincenzoGame {
         // Endless-mode doors (orange marks on the walls; secret ones only once found)
         ctx.fillStyle = '#ffa502';
         this.room.doors.forEach(door => {
-            if (door.hidden && !this.foundSecrets.has(`${this.endlessRoomId}>${door.to}`)) return;
+            if (door.hidden && !this.foundSecrets.has(`${this.roomId}>${door.to}`)) return;
             const p = this.room.wallPoint(door.wall, door.at, 0);
             const alongX = door.wall === 'north' || door.wall === 'south';
             ctx.fillRect(mapX(p.x) - (alongX ? 6 : 2), mapZ(p.z) - (alongX ? 2 : 6), alongX ? 12 : 4, alongX ? 4 : 12);
@@ -1103,8 +1161,8 @@ class VincenzoGame {
             // Update Vincenzo
             this.vincenzo.update(dt, this.input, this.room);
 
-            // Endless mode: a door leads into a passage, and the passage's doors into the rooms
-            if (this.isEndless && this.isRunning) {
+            // Endless mode and multi-room levels: a door leads into a passage, and the passage's doors into the rooms
+            if (this.isRunning && this.worldRooms()) {
                 this.doorCooldown = Math.max(0, this.doorCooldown - dt);
                 const door = this.doorCooldown <= 0 && this.room.doorAt(this.vincenzo.position.x, this.vincenzo.position.z);
                 if (door && this.passage) {
@@ -1112,12 +1170,17 @@ class VincenzoGame {
                     const { from, to } = this.passage;
                     this.enterRoom(door.to, door.to === to ? from : to);
                 } else if (door) {
-                    this.enterPassage(this.endlessRoomId, door);
+                    this.enterPassage(this.roomId, door);
                 }
             }
 
-            // Dust particles
-            if (Math.abs(this.vincenzo.speed) > 4 && Math.random() < 0.35) {
+            // Dust particles (bubbles underwater)
+            if (this.room.underwater) {
+                if (Math.random() < dt * (Math.abs(this.vincenzo.speed) > 4 ? 4 : 1.2)) {
+                    this.particles.spawnBubbles(this.vincenzo.position);
+                    if (Math.random() < 0.3) sound.playBubble();
+                }
+            } else if (Math.abs(this.vincenzo.speed) > 4 && Math.random() < 0.35) {
                 this.particles.spawnDust(this.vincenzo.position);
             }
 

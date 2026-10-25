@@ -179,7 +179,7 @@
 
     {
       "id": "sneeze", "category": "weapons", "type": "ammo", "weapon": "sneeze",
-      "name": "Pepper Sneeze", "icon": "🤧", "price": 1000, "quantity": 3,
+      "name": "Pepper Sneeze", "icon": "🤧", "price": 10000, "quantity": 3,
       "key": "e",
       "description": "3 mighty sneezes. Press E: every mouse you can see on screen is knocked out instantly!"
     },
@@ -214,6 +214,12 @@
       "id": "squirter_ammo", "category": "weapons", "type": "ammo", "weapon": "squirter", "requires": "squirter",
       "name": "Water Refill", "icon": "💧", "price": 250, "quantity": 15, "key": "r",
       "description": "15 squirts for the Super Squirter."
+    },
+    {
+      "id": "cat_army", "category": "weapons", "type": "unlock", "weapon": "catArmy", "noSurprise": true,
+      "name": "Cat Army Horn", "icon": "📯", "price": 1000000, "key": "x",
+      "duration": 30, "recharge": 60, "helpers": 6,
+      "description": "The legendary golden horn! Press X and the Cat Army comes running: 6 cats from the shop hunt mice with you for 30 seconds. Never runs out: blow it again after 60 seconds!"
     },
 
     {

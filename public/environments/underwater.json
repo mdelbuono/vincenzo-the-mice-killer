@@ -1,0 +1,46 @@
+{
+  "id": "underwater",
+  "name": "Under the Sea",
+  "sky": "0x0a4f7a",
+  "fogColor": "0x0e6a8f",
+  "fogDensity": 0.03,
+  "underwater": true,
+  "lights": [
+    {"type": "hemisphere", "color": "0x9be7ff", "groundColor": "0x0b3d5c", "intensity": 0.75},
+    {"type": "ambient", "color": "0x5fb8e0", "intensity": 0.3},
+    {"type": "directional", "color": "0xcff6ff", "intensity": 0.7, "position": [6, 20, 4], "castShadow": true, "shadowMapSize": 2048, "shadowCameraSize": 20},
+    {"type": "point", "color": "0x48dbfb", "intensity": 0.6, "distance": 18, "position": [-9, 5, 5]},
+    {"type": "point", "color": "0xff9ff3", "intensity": 0.4, "distance": 14, "position": [10, 4, -6]}
+  ],
+  "floor": {"texture": "sand", "roughness": 0.95},
+  "ceiling": null,
+  "walls": {"texture": "reefWall", "roughness": 0.9, "height": 9},
+  "extras": [
+    {"type": "waterSurface"},
+    {"type": "lightRays"},
+    {"type": "bubbles"},
+    {"type": "fishSchool", "count": 4}
+  ],
+  "props": [
+    {"builder": "shipwreck", "x": -6, "z": -7.5, "rotY": 0.3},
+    {"builder": "giantClam", "x": 10, "z": 6},
+    {"builder": "octopus", "x": 12.5, "z": -8.5},
+    {"builder": "treasureChest", "x": -1, "z": -2.5},
+    {"builder": "anchor", "x": 7, "z": -1},
+    {"builder": "seaRock", "x": -13, "z": 8.5},
+    {"builder": "seaRock", "x": 3, "z": 9.5},
+    {"builder": "coral", "x": -9, "z": 2, "color": "0xff7675"},
+    {"builder": "coral", "x": 14, "z": 1, "color": "0xfdcb6e"},
+    {"builder": "coral", "x": -3, "z": 6, "color": "0xa29bfe"},
+    {"builder": "coral", "x": 5, "z": -9, "color": "0x55efc4"},
+    {"builder": "coral", "x": -14, "z": -3, "color": "0xfd79a8"},
+    {"builder": "seaweed", "x": -6, "z": 9},
+    {"builder": "seaweed", "x": 9, "z": 10},
+    {"builder": "seaweed", "x": 2, "z": 2},
+    {"builder": "seaweed", "x": -12, "z": -10},
+    {"builder": "seaweed", "x": 14, "z": -3},
+    {"builder": "jellyfish", "x": -4, "y": 6, "z": 3, "color": "0xff9ff3"},
+    {"builder": "jellyfish", "x": 8, "y": 6.5, "z": -5, "color": "0x48dbfb"},
+    {"builder": "jellyfish", "x": 0, "y": 7, "z": -9, "color": "0xfeca57"}
+  ]
+}

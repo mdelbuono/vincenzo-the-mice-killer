@@ -16,6 +16,11 @@ export function colorToCss(color) {
     return '#' + n.toString(16).padStart(6, '0');
 }
 
+// 1000000 -> "1,000,000"
+export function formatBrokjes(n) {
+    return n.toLocaleString('en-US');
+}
+
 export class Shop {
     /**
      * @param {object} callbacks - { onWalletChange, onAppearanceChange, onInventoryChange, onOpen, onClose }
@@ -188,7 +193,8 @@ export class Shop {
             pattern: catItem.pattern || 'spots',
             outfits: outfits,
             blaster: this.ownsWeapon('blaster'),
-            squirter: this.ownsWeapon('squirter')
+            squirter: this.ownsWeapon('squirter'),
+            catArmy: this.ownsWeapon('catArmy')
         };
     }
 
@@ -235,12 +241,13 @@ export class Shop {
         this.notifyInventory();
     }
 
-    // Anything in the shop except surprise boxes, the free starter cat,
-    // permanent items already owned, and ammo for weapons not owned yet.
+    // Anything in the shop except surprise boxes, the free starter cat, items marked
+    // "noSurprise", permanent items already owned, and ammo for weapons not owned yet.
     mysteryPool() {
         return this.catalog.items.filter(i =>
             i.type !== 'mystery' &&
             !i.default &&
+            !i.noSurprise &&
             !(PERMANENT_TYPES.includes(i.type) && this.isOwned(i.id)) &&
             !(i.requires && !this.isOwned(i.requires))
         );
@@ -322,8 +329,8 @@ export class Shop {
         const owned = this.isOwned(item.id);
         const canAfford = this.wallet >= item.price;
         const buyBtn = canAfford
-            ? `<button class="shop-card-btn" data-action="buy" data-id="${item.id}">Buy 🥫 ${item.price}</button>`
-            : `<button class="shop-card-btn" disabled>Need 🥫 ${item.price}</button>`;
+            ? `<button class="shop-card-btn" data-action="buy" data-id="${item.id}">Buy 🥫 ${formatBrokjes(item.price)}</button>`
+            : `<button class="shop-card-btn" disabled>Need 🥫 ${formatBrokjes(item.price)}</button>`;
 
         let button = buyBtn;
         let meta = '';
@@ -348,6 +355,7 @@ export class Shop {
                 stateClass = 'owned';
                 button = '<button class="shop-card-btn" disabled>Owned ✓</button>';
             }
+            if (item.key) meta = `Key <span class="key-badge">${item.key.toUpperCase()}</span>`;
         } else if (item.type === 'boost' || item.type === 'ammo') {
             meta = `You have: <b>${this.count(item.id)}</b> · Key <span class="key-badge">${item.key.toUpperCase()}</span>`;
             if (item.requires && !this.isOwned(item.requires)) {

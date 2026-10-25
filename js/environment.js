@@ -7,8 +7,11 @@ import {
     createGrassTexture, createFenceTexture, createConcreteTexture, createCorrugatedMetalTexture,
     createSupermarketFloorTexture, createSupermarketWallTexture, createDeckTexture, createHullTexture,
     createWaterTexture, createSpaceFloorTexture, createSpaceWallTexture, createDoorSignTexture,
-    createProductsTexture, createStarfieldTexture, createPawFlagTexture
+    createProductsTexture, createStarfieldTexture, createPawFlagTexture,
+    createSandTexture, createReefWallTexture, createShopTagTexture, createIconTexture
 } from './textures.js';
+import { Cat } from './cat.js';
+import { buildOutfit, buildBlasterModel, buildSquirterModel, buildCatArmyHornModel } from './outfits.js';
 
 // Indoor rooms share this dark backdrop; outdoor environments set their own "sky"
 const DEFAULT_SKY = 0x12141a;
@@ -60,6 +63,8 @@ export class LevelEnvironment {
         this.tvTexture = null;
         this.currentLevel = 1;
         this.zeroGravity = false;
+        this.underwater = false; // swimming: floating like zero gravity, with water drag and bubbles
+        this.shop = null;        // the Shop, set by the game: level 11 shows its items on the shelves
         this.animators = []; // functions (dt, time) for moving decorations
         this.doors = [];     // endless-mode doors to other rooms
         this.heightFn = null; // (x, z) => floor height, for stairs in passages
@@ -79,6 +84,7 @@ export class LevelEnvironment {
         this.tvTexture = null;
         this.productsTexture = null;
         this.zeroGravity = false;
+        this.underwater = false;
         this.animators = [];
         this.doors = [];
         this.heightFn = null;
@@ -140,8 +146,9 @@ export class LevelEnvironment {
         this.scene.fog.color.setHex(envData.fogColor ? parseInt(envData.fogColor, 16) : sky);
         this.scene.fog.density = envData.fogDensity !== undefined ? envData.fogDensity : DEFAULT_FOG_DENSITY;
 
-        // Spaceship: cat and mice float (see Cat.update and Mouse.update)
-        this.zeroGravity = !!envData.zeroGravity;
+        // Spaceship: cat and mice float (see Cat.update and Mouse.update); underwater they swim the same way
+        this.underwater = !!envData.underwater;
+        this.zeroGravity = !!envData.zeroGravity || this.underwater;
 
         // --- Lights ---
         if (envData.lights) {
@@ -274,6 +281,8 @@ export class LevelEnvironment {
             case 'hull':            return createHullTexture();
             case 'spaceFloor':      return createSpaceFloorTexture();
             case 'spaceWall':       return createSpaceWallTexture();
+            case 'sand':            return createSandTexture();
+            case 'reefWall':        return createReefWallTexture();
             default:
                 console.warn(`Unknown texture name: "${textureName}"`);
                 return null;
@@ -571,6 +580,12 @@ export class LevelEnvironment {
                 }
                 break;
             }
+            case 'waterSurface':     this.buildWaterSurface(); break;
+            case 'lightRays':        this.buildLightRays(); break;
+            case 'bubbles':          this.buildBubbles(); break;
+            case 'fishSchool':       this.buildFishSchool(extra); break;
+            case 'shopBanner':       this.buildShopBanner(extra); break;
+            case 'bunting':          this.buildBunting(); break;
             default:
                 console.warn(`Unknown extra type: "${extra.type}"`);
         }
@@ -659,6 +674,17 @@ export class LevelEnvironment {
             case 'spaceRobot':       this.buildSpaceRobot(x, z); break;
             case 'plantPod':         this.buildPlantPod(x, z); break;
             case 'spaceSuitRack':    this.buildSpaceSuitRack(x, z); break;
+            case 'coral':            this.buildCoral(x, z, prop.color); break;
+            case 'seaweed':          this.buildSeaweed(x, z); break;
+            case 'shipwreck':        this.buildShipwreck(x, z, prop.rotY || 0); break;
+            case 'giantClam':        this.buildGiantClam(x, z); break;
+            case 'jellyfish':        this.buildJellyfish(x, prop.y !== undefined ? y : 5.5, z, prop.color); break;
+            case 'octopus':          this.buildOctopus(x, z); break;
+            case 'seaRock':          this.buildSeaRock(x, z); break;
+            case 'shopDisplay':      this.buildShopDisplay(x, z, prop.rotY || 0, prop); break;
+            case 'shopShowcase':     this.buildShopShowcase(x, z, prop.item); break;
+            case 'giftPile':         this.buildGiftPile(x, z); break;
+            case 'shopCounter':      this.buildShopCounter(x, z, prop.rotY || 0); break;
             default:
                 console.warn(`Unknown prop builder: "${prop.builder}"`);
         }
@@ -2362,5 +2388,498 @@ export class LevelEnvironment {
         addMesh(g, visor, std(0xf1c40f, { metalness: 0.9, roughness: 0.1 }), 0, 2.82, 0.2);
         addMesh(g, new THREE.BoxGeometry(0.25, 0.15, 0.02), std(0x0984e3), 0.25, 2.2, 0.26);
         this.addCollider(x, z, 1.6, 1.4);
+    }
+
+    // ---------- Underwater (Level 12) ----------
+
+    // The rippling water surface far above, seen from below
+    buildWaterSurface() {
+        const tex = createWaterTexture();
+        tex.repeat.set(3, 3);
+        const surface = new THREE.Mesh(
+            new THREE.PlaneGeometry(this.roomWidth * 2, this.roomDepth * 2),
+            new THREE.MeshBasicMaterial({ map: tex, color: 0x9be7ff, transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false })
+        );
+        surface.rotation.x = Math.PI / 2;
+        surface.position.y = this.wallHeight + 1.5;
+        this.roomGroup.add(surface);
+        this.animate((dt) => {
+            tex.offset.x += dt * 0.02;
+            tex.offset.y += dt * 0.013;
+        });
+    }
+
+    // Beams of sunlight slanting down through the water and slowly swaying
+    buildLightRays() {
+        const rays = [];
+        for (let i = 0; i < 9; i++) {
+            const mat = new THREE.MeshBasicMaterial({ color: 0xdff9fb, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending });
+            const ray = new THREE.Mesh(new THREE.ConeGeometry(1.6 + Math.random(), 12, 12, 1, true), mat);
+            ray.position.set(-13 + i * 3.3, 5.5, (Math.random() - 0.5) * 18);
+            ray.rotation.z = 0.25;
+            this.roomGroup.add(ray);
+            rays.push(ray);
+        }
+        this.animate((dt, t) => {
+            rays.forEach((ray, i) => {
+                ray.rotation.z = 0.25 + Math.sin(t * 0.4 + i) * 0.06;
+                ray.material.opacity = 0.06 + Math.sin(t * 0.7 + i * 1.7) * 0.03;
+            });
+        });
+    }
+
+    // Streams of bubbles rising from the sand
+    buildBubbles() {
+        const count = 220;
+        const positions = new Float32Array(count * 3);
+        const vents = [[-12, -8], [-4, 9], [6, -6], [13, 7], [0, 0], [-14, 3], [10, -10]];
+        const top = this.wallHeight + 1.4;
+        for (let i = 0; i < count; i++) {
+            const [vx, vz] = vents[i % vents.length];
+            positions[i * 3] = vx + (Math.random() - 0.5);
+            positions[i * 3 + 1] = Math.random() * top;
+            positions[i * 3 + 2] = vz + (Math.random() - 0.5);
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const bubbles = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xe0f7ff, size: 0.18, transparent: true, opacity: 0.8 }));
+        this.roomGroup.add(bubbles);
+        this.animate((dt, t) => {
+            for (let i = 0; i < count; i++) {
+                positions[i * 3 + 1] += dt * (1.2 + (i % 5) * 0.3);
+                positions[i * 3] += Math.sin(t * 3 + i) * dt * 0.3;
+                if (positions[i * 3 + 1] > top) positions[i * 3 + 1] = 0;
+            }
+            geo.attributes.position.needsUpdate = true;
+        });
+    }
+
+    // Schools of little fish swimming in big circles high above the mice
+    buildFishSchool(extra) {
+        const colors = [0xfeca57, 0xff6b6b, 0x48dbfb, 0xff9ff3, 0x1dd1a1];
+        const schools = extra.count || 4;
+        for (let s = 0; s < schools; s++) {
+            const school = new THREE.Group();
+            const color = colors[s % colors.length];
+            const body = std(color, { roughness: 0.4 });
+            const fins = std(0xffffff, { roughness: 0.4 });
+            for (let i = 0; i < 7; i++) {
+                const fish = new THREE.Group();
+                const b = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), body);
+                b.scale.set(0.55, 0.8, 1.4);
+                const tail = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.3, 4), fins);
+                tail.rotation.x = -Math.PI / 2;
+                tail.position.z = 0.38;
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.04, 6, 6), std(0x111111));
+                eye.position.set(0.1, 0.06, -0.18);
+                fish.add(b, tail, eye);
+                fish.position.set((Math.random() - 0.5) * 2.4, (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 2.4);
+                fish.userData.tail = tail;
+                school.add(fish);
+            }
+            this.roomGroup.add(school);
+            const radius = 6 + s * 2;
+            const height = 5.2 + (s % 3) * 0.9;
+            const speed = (s % 2 ? 1 : -1) * (0.25 + s * 0.05);
+            this.animate((dt, t) => {
+                const a = t * speed + s * 1.6;
+                school.position.set(Math.cos(a) * radius, height + Math.sin(t * 0.8 + s) * 0.5, Math.sin(a) * radius * 0.6);
+                school.rotation.y = -a + (speed > 0 ? Math.PI : 0);
+                school.children.forEach((fish, i) => { fish.userData.tail.rotation.y = Math.sin(t * 12 + i) * 0.5; });
+            });
+        }
+    }
+
+    // Branching coral (mice can't swim through it)
+    buildCoral(x, z, color) {
+        const g = this.propGroup(x, z);
+        const mat = std(color ? parseInt(color, 16) : 0xff7675, { roughness: 0.8 });
+        addMesh(g, new THREE.SphereGeometry(0.8, 10, 8), std(0x5f6d7a, { roughness: 1 }), 0, 0.2, 0).scale.y = 0.5;
+        for (let i = 0; i < 7; i++) {
+            const a = (i / 7) * Math.PI * 2;
+            const h = 1.2 + (i % 3) * 0.5;
+            const branch = addMesh(g, new THREE.CylinderGeometry(0.1, 0.18, h, 8), mat, Math.cos(a) * 0.35, h / 2 + 0.2, Math.sin(a) * 0.35);
+            branch.rotation.set(Math.sin(a) * 0.4, 0, -Math.cos(a) * 0.4);
+            addMesh(g, new THREE.SphereGeometry(0.18, 8, 6), mat, Math.cos(a) * (0.35 + h * 0.38), h + 0.15, Math.sin(a) * (0.35 + h * 0.38));
+        }
+        this.addCollider(x, z, 1.8, 1.8);
+    }
+
+    // Tall swaying seaweed; it can be swum through, so mice like to hide in it
+    buildSeaweed(x, z) {
+        const g = this.propGroup(x, z);
+        const mat = std(0x27ae60, { roughness: 0.8, side: THREE.DoubleSide });
+        const strands = [];
+        for (let i = 0; i < 6; i++) {
+            const strand = new THREE.Group();
+            strand.position.set((Math.random() - 0.5) * 1.6, 0, (Math.random() - 0.5) * 1.6);
+            let parent = strand;
+            const segments = 5 + (i % 3);
+            for (let k = 0; k < segments; k++) {
+                const seg = new THREE.Group();
+                seg.position.y = k === 0 ? 0 : 0.7;
+                const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.75), mat);
+                leaf.position.y = 0.35;
+                seg.add(leaf);
+                parent.add(seg);
+                parent = seg;
+            }
+            g.add(strand);
+            strands.push(strand);
+        }
+        this.animate((dt, t) => {
+            strands.forEach((strand, i) => {
+                let seg = strand.children[0];
+                let k = 0;
+                while (seg) {
+                    seg.rotation.z = Math.sin(t * 1.4 + i + k * 0.6) * 0.18;
+                    seg.rotation.x = Math.cos(t * 1.1 + i * 2 + k * 0.5) * 0.1;
+                    seg = seg.children.find(c => c.isGroup);
+                    k++;
+                }
+            });
+        });
+    }
+
+    // A sunken pirate ship lying on its side, half buried in the sand
+    buildShipwreck(x, z, rotY) {
+        const g = this.propGroup(x, z);
+        g.rotation.y = rotY;
+        const wood = std(0x6d4c41, { roughness: 0.95 });
+        const dark = std(0x4e342e, { roughness: 1 });
+        const hull = addMesh(g, new THREE.BoxGeometry(8, 2.4, 3), wood, 0, 0.9, 0);
+        hull.rotation.x = 0.25;
+        const bow = addMesh(g, new THREE.ConeGeometry(1.6, 2.4, 4), wood, -5, 0.9, 0);
+        bow.rotation.set(0.25, Math.PI / 4, Math.PI / 2);
+        bow.scale.set(1, 1, 0.95);
+        // Broken mast leaning over, a hole in the side and a torn flag
+        const mast = addMesh(g, new THREE.CylinderGeometry(0.18, 0.22, 6), dark, 1, 3.2, -0.5);
+        mast.rotation.z = -0.6;
+        const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.9), new THREE.MeshStandardMaterial({ map: createPawFlagTexture(), side: THREE.DoubleSide }));
+        flag.position.set(2.9, 5.6, -0.5);
+        flag.rotation.z = -0.6;
+        g.add(flag);
+        addMesh(g, new THREE.CircleGeometry(0.6, 12), std(0x111111), -1.5, 1.1, 1.82).rotation.x = 0.25;
+        [-3, 0.5, 2.8].forEach(px => addMesh(g, new THREE.BoxGeometry(0.2, 2.6, 3.2), dark, px, 0.95, 0).rotation.x = 0.25);
+        this.animate((dt, t) => { flag.rotation.y = Math.sin(t * 0.9) * 0.3; });
+        this.addRotatedCollider(x, z, 10, 3.4, rotY);
+    }
+
+    // A giant clam that slowly opens and closes around a glowing pearl
+    buildGiantClam(x, z) {
+        const g = this.propGroup(x, z);
+        const shell = std(0xe0c3fc, { roughness: 0.5 });
+        const bottom = addMesh(g, new THREE.SphereGeometry(1.1, 18, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), shell, 0, 0.6, 0);
+        bottom.scale.y = 0.6;
+        const lid = new THREE.Group();
+        lid.position.set(0, 0.6, 1.0);
+        g.add(lid);
+        const top = addMesh(lid, new THREE.SphereGeometry(1.1, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), shell, 0, 0, -1.0);
+        top.scale.y = 0.6;
+        const pearl = addMesh(g, new THREE.SphereGeometry(0.3, 14, 12), std(0xffffff, { emissive: 0xdff9fb, emissiveIntensity: 0.8, roughness: 0.1, metalness: 0.3 }), 0, 0.75, 0);
+        const glow = new THREE.PointLight(0xdff9fb, 0.6, 5);
+        glow.position.set(0, 1.2, 0);
+        g.add(glow);
+        this.animate((dt, t) => {
+            const open = (Math.sin(t * 0.6) + 1) / 2;
+            lid.rotation.x = -open * 0.9;
+            glow.intensity = 0.2 + open * 0.8;
+            pearl.material.emissiveIntensity = 0.3 + open * 0.7;
+        });
+        this.addCollider(x, z, 2.4, 2.4);
+    }
+
+    // Glowing jellyfish bobbing up and down, high enough to swim under
+    buildJellyfish(x, y, z, color) {
+        const g = this.propGroup(x, z);
+        const c = color ? parseInt(color, 16) : 0xff9ff3;
+        const jelly = new THREE.Group();
+        g.add(jelly);
+        const bellMat = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.5, transparent: true, opacity: 0.7, roughness: 0.2 });
+        addMesh(jelly, new THREE.SphereGeometry(0.6, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), bellMat);
+        const tentacles = [];
+        const tentMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.6 });
+        for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2;
+            const tent = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.01, 1.4, 4), tentMat);
+            tent.position.set(Math.cos(a) * 0.35, -0.7, Math.sin(a) * 0.35);
+            jelly.add(tent);
+            tentacles.push(tent);
+        }
+        const phase = x + z;
+        this.animate((dt, t) => {
+            jelly.position.y = y + Math.sin(t * 0.7 + phase) * 0.6;
+            const pulse = 1 + Math.sin(t * 2.5 + phase) * 0.12;
+            jelly.scale.set(pulse, 2 - pulse, pulse);
+            tentacles.forEach((tent, i) => { tent.rotation.z = Math.sin(t * 2 + i + phase) * 0.3; });
+        });
+    }
+
+    // A friendly purple octopus sitting on a rock, waving its arms
+    buildOctopus(x, z) {
+        const g = this.propGroup(x, z);
+        addMesh(g, new THREE.DodecahedronGeometry(1.0, 0), std(0x636e72, { roughness: 1 }), 0, 0.5, 0).scale.y = 0.6;
+        const purple = std(0x9b59b6, { roughness: 0.5 });
+        const head = addMesh(g, new THREE.SphereGeometry(0.7, 16, 12), purple, 0, 1.75, 0);
+        head.scale.y = 1.2;
+        [-0.25, 0.25].forEach(ex => {
+            addMesh(g, new THREE.SphereGeometry(0.16, 10, 8), std(0xffffff), ex, 1.75, 0.6);
+            addMesh(g, new THREE.SphereGeometry(0.08, 8, 6), std(0x111111), ex, 1.75, 0.73);
+        });
+        const arms = [];
+        for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2;
+            const arm = new THREE.Group();
+            arm.position.set(Math.cos(a) * 0.45, 1.2, Math.sin(a) * 0.45);
+            arm.rotation.y = -a;
+            const limb = addMesh(arm, new THREE.CylinderGeometry(0.06, 0.16, 1.3, 8), purple, 0.6, -0.1, 0);
+            limb.rotation.z = Math.PI / 2.4;
+            g.add(arm);
+            arms.push(arm);
+        }
+        this.animate((dt, t) => {
+            arms.forEach((arm, i) => { arm.rotation.z = Math.sin(t * 2 + i * 0.8) * 0.35; });
+            head.rotation.y = Math.sin(t * 0.5) * 0.4;
+        });
+        this.addCollider(x, z, 2.2, 2.2);
+    }
+
+    buildSeaRock(x, z) {
+        const g = this.propGroup(x, z);
+        const rock = std(0x57606f, { roughness: 1 });
+        [[0, 0.8, 0, 1.3], [1.1, 0.5, 0.5, 0.8], [-0.9, 0.45, -0.4, 0.75]].forEach(([rx, ry, rz, r]) => {
+            addMesh(g, new THREE.DodecahedronGeometry(r, 0), rock, rx, ry, rz).rotation.set(rx, rz, ry);
+        });
+        addMesh(g, new THREE.SphereGeometry(0.25, 8, 6), std(0xff9f43, { roughness: 0.6 }), 0.3, 1.9, 0.4); // a little sea star
+        this.addCollider(x, z, 3, 2.4);
+    }
+
+    // ---------- The Brokjes Shop (Level 11) ----------
+
+    // Big shop sign on a wall, e.g. "🐱 CATS"
+    buildShopBanner(extra) {
+        const p = this.wallPoint(extra.wall || 'north', extra.at || 0, 0.08);
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5), new THREE.MeshBasicMaterial({ map: createDoorSignTexture(extra.text || '🛒 SHOP') }));
+        sign.position.set(p.x, 6.2, p.z);
+        sign.rotation.y = p.rotY;
+        this.roomGroup.add(sign);
+    }
+
+    // Garlands of colorful little flags across the ceiling
+    buildBunting() {
+        const colors = [0xff4757, 0xffa502, 0xfeca57, 0x2ed573, 0x1e90ff, 0x9b59b6];
+        const flagGeo = new THREE.ConeGeometry(0.3, 0.6, 3);
+        for (let row = -1; row <= 1; row++) {
+            const z = row * 7;
+            for (let i = 0; i < 26; i++) {
+                const x = -16 + i * 1.28;
+                const sag = Math.sin((i / 25) * Math.PI) * 1.2;
+                const flag = new THREE.Mesh(flagGeo, std(colors[i % colors.length], { roughness: 0.7 }));
+                flag.rotation.x = Math.PI;
+                flag.scale.z = 0.15;
+                flag.position.set(x, this.wallHeight - 0.6 - sag, z);
+                this.roomGroup.add(flag);
+            }
+        }
+    }
+
+    // The shop items of a category ("category", from "start", "count" of them), or a list of "items" ids
+    shopItemsFor(prop) {
+        if (!this.shop || !this.shop.loaded) return [];
+        const items = this.shop.catalog.items;
+        if (prop.items) return prop.items.map(id => this.shop.itemsById[id]).filter(Boolean);
+        const start = prop.start || 0;
+        return items.filter(i => i.category === prop.category).slice(start, start + (prop.count || 5));
+    }
+
+    // A long shop counter with items on little turntables and a price tag in front of each
+    buildShopDisplay(x, z, rotY, prop) {
+        const items = this.shopItemsFor(prop);
+        const slots = Math.max(items.length, prop.count || 1);
+        const spacing = 2.4;
+        const length = slots * spacing + 0.4;
+        const g = this.propGroup(x, z);
+        g.rotation.y = rotY;
+        const wood = std(prop.color ? parseInt(prop.color, 16) : 0xb07a4f, { roughness: 0.6 });
+        addMesh(g, new THREE.BoxGeometry(length, 1.0, 1.4), wood, 0, 0.5, 0);
+        addMesh(g, new THREE.BoxGeometry(length + 0.2, 0.1, 1.6), std(0xfffaf0, { roughness: 0.4 }), 0, 1.05, 0);
+        items.forEach((item, i) => {
+            const sx = -length / 2 + 0.2 + spacing * (i + 0.5);
+            const turntable = addMesh(g, new THREE.CylinderGeometry(0.75, 0.8, 0.12, 24), std(0xdfe6e9, { metalness: 0.5, roughness: 0.3 }), sx, 1.16, 0);
+            turntable.castShadow = false;
+            const model = this.buildShopItemModel(item);
+            model.position.set(sx, 1.22, 0);
+            g.add(model);
+            const owned = this.shop.isOwned(item.id) && ['cat', 'outfit', 'unlock'].includes(item.type);
+            const tag = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.95), new THREE.MeshBasicMaterial({ map: createShopTagTexture(item, owned) }));
+            tag.position.set(sx, 0.55, 0.71);
+            g.add(tag);
+            const phase = i * 0.9;
+            this.animate((dt, t) => { model.rotation.y = t * 0.6 + phase; });
+        });
+        this.addRotatedCollider(x, z, length, 1.6, rotY);
+    }
+
+    /**
+     * A small 3D version of a shop item: cats as statues, clothes on a cat head,
+     * the blaster and squirter models, potion bottles for boosts and boxes for the rest.
+     */
+    buildShopItemModel(item) {
+        const g = new THREE.Group();
+        if (item.type === 'cat') {
+            const cat = new Cat({ add() {} }, {
+                name: item.name,
+                fur: parseInt(item.fur, 16),
+                spots: parseInt(item.spots, 16),
+                eyes: parseInt(item.eyes, 16),
+                pattern: item.pattern || 'spots'
+            });
+            cat.mesh.remove(cat.nameTag);
+            cat.mesh.scale.setScalar(0.75);
+            cat.mesh.traverse(o => { o.castShadow = false; });
+            g.add(cat.mesh);
+        } else if (item.type === 'outfit') {
+            // A cat head on a stand wearing the item
+            const head = new THREE.Group();
+            head.position.y = 0.9;
+            head.scale.setScalar(1.3);
+            const fur = std(0xf5f6fa, { roughness: 0.7 });
+            addMesh(g, new THREE.CylinderGeometry(0.08, 0.2, 0.5, 10), std(0x2f3542), 0, 0.25, 0);
+            addMesh(head, new THREE.SphereGeometry(0.42, 18, 14), fur);
+            [-1, 1].forEach(side => {
+                const ear = addMesh(head, new THREE.ConeGeometry(0.14, 0.3, 4), fur, side * 0.24, 0.38, 0);
+                ear.rotation.z = -side * 0.3;
+            });
+            [-0.15, 0.15].forEach(ex => addMesh(head, new THREE.SphereGeometry(0.07, 8, 6), std(0x2ecc71, { emissive: 0x1e8449, emissiveIntensity: 0.4 }), ex, 0.05, -0.37));
+            const piece = buildOutfit(item.builder);
+            if (piece) head.add(piece);
+            g.add(head);
+        } else if (item.type === 'unlock' && item.weapon === 'blaster') {
+            const m = buildBlasterModel();
+            m.scale.setScalar(2.2);
+            m.position.y = 0.6;
+            g.add(m);
+        } else if (item.type === 'unlock' && item.weapon === 'squirter') {
+            const m = buildSquirterModel();
+            m.scale.setScalar(2.2);
+            m.position.y = 0.6;
+            g.add(m);
+        } else if (item.weapon === 'catArmy') {
+            const m = buildCatArmyHornModel();
+            m.scale.setScalar(2.6);
+            m.position.y = 0.9;
+            g.add(m);
+        } else if (item.type === 'boost') {
+            // A potion bottle with the boost's icon on its label
+            const hue = [...item.id].reduce((h, ch) => h + ch.charCodeAt(0), 0) % 360 / 360;
+            const liquid = new THREE.Color().setHSL(hue, 0.8, 0.55);
+            addMesh(g, new THREE.CylinderGeometry(0.32, 0.36, 0.8, 16), std(liquid.getHex(), { emissive: liquid.getHex(), emissiveIntensity: 0.3, roughness: 0.2 }), 0, 0.4, 0);
+            addMesh(g, new THREE.CylinderGeometry(0.38, 0.4, 0.95, 16), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, roughness: 0.05 }), 0, 0.48, 0);
+            addMesh(g, new THREE.CylinderGeometry(0.14, 0.18, 0.35, 12), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 }), 0, 1.12, 0);
+            addMesh(g, new THREE.CylinderGeometry(0.12, 0.12, 0.15, 10), std(0xa0522d), 0, 1.35, 0);
+            const label = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.5), new THREE.MeshBasicMaterial({ map: createIconTexture(item.icon, '#fffaf0') }));
+            label.position.set(0, 0.5, 0.41);
+            g.add(label);
+        } else if (item.type === 'mystery') {
+            this.addGiftBox(g, 0, 0, 0, 1.0, 0xff4757, 0xfeca57);
+            const q = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.6), new THREE.MeshBasicMaterial({ map: createIconTexture('❓', '#ff4757') }));
+            q.position.set(0, 0.5, 0.51);
+            g.add(q);
+        } else {
+            // Ammo and the rest: a box with the item's icon on every side
+            const mat = new THREE.MeshStandardMaterial({ map: createIconTexture(item.icon, '#ffeaa7'), roughness: 0.6 });
+            addMesh(g, new THREE.BoxGeometry(0.9, 0.9, 0.9), mat, 0, 0.45, 0);
+        }
+        return g;
+    }
+
+    // A gift box with a ribbon cross and a bow on top
+    addGiftBox(parent, x, y, z, size, color, ribbon) {
+        const box = new THREE.Group();
+        box.position.set(x, y, z);
+        parent.add(box);
+        const ribbonMat = std(ribbon, { roughness: 0.4 });
+        addMesh(box, new THREE.BoxGeometry(size, size, size), std(color, { roughness: 0.5 }), 0, size / 2, 0);
+        addMesh(box, new THREE.BoxGeometry(size + 0.02, size + 0.02, size * 0.18), ribbonMat, 0, size / 2, 0);
+        addMesh(box, new THREE.BoxGeometry(size * 0.18, size + 0.02, size + 0.02), ribbonMat, 0, size / 2, 0);
+        [-1, 1].forEach(side => {
+            const loop = addMesh(box, new THREE.TorusGeometry(size * 0.15, size * 0.05, 6, 12), ribbonMat, side * size * 0.14, size + size * 0.1, 0);
+            loop.rotation.y = Math.PI / 2;
+        });
+        return box;
+    }
+
+    // A pile of giant presents (Surprises room)
+    buildGiftPile(x, z) {
+        const g = this.propGroup(x, z);
+        const colors = [[0xff4757, 0xfeca57], [0x1e90ff, 0xffffff], [0x2ed573, 0xff6b81], [0x9b59b6, 0xfeca57], [0xffa502, 0x1e90ff], [0xff9ff3, 0x2ed573]];
+        [[0, 0, 0, 1.8], [1.8, 0, 0.4, 1.4], [-1.6, 0, -0.3, 1.5], [0.2, 1.8, 0.1, 1.2], [-1.4, 1.5, 0, 0.9], [1.6, 1.4, 0.3, 0.8]].forEach(([bx, by, bz, size], i) => {
+            const box = this.addGiftBox(g, bx, by, bz, size, colors[i][0], colors[i][1]);
+            box.rotation.y = i * 0.5;
+        });
+        this.addCollider(x, z, 5, 2.6);
+    }
+
+    // The cash desk, with a register and the shopkeeper cat in a top hat and monocle
+    buildShopCounter(x, z, rotY) {
+        const g = this.propGroup(x, z);
+        g.rotation.y = rotY;
+        addMesh(g, new THREE.BoxGeometry(5, 1.2, 1.6), std(0x8e44ad, { roughness: 0.5 }), 0, 0.6, 0);
+        addMesh(g, new THREE.BoxGeometry(5.2, 0.1, 1.8), std(0xf1c40f, { metalness: 0.6, roughness: 0.3 }), 0, 1.25, 0);
+        addMesh(g, new THREE.BoxGeometry(1.0, 0.6, 0.8), std(0xdfe6e9, { metalness: 0.4 }), 1.4, 1.6, 0);
+        addMesh(g, new THREE.BoxGeometry(0.8, 0.45, 0.05), std(0x2ed573, { emissive: 0x2ed573, emissiveIntensity: 0.6 }), 1.4, 2.1, 0.1).rotation.x = -0.3;
+        // A bowl full of brokjes on the counter
+        addMesh(g, new THREE.CylinderGeometry(0.45, 0.3, 0.3, 14), std(0xff4757), -1.4, 1.45, 0);
+        for (let i = 0; i < 10; i++) {
+            addMesh(g, new THREE.SphereGeometry(0.09, 6, 5), std(0xa0522d), -1.4 + (Math.random() - 0.5) * 0.6, 1.62, (Math.random() - 0.5) * 0.6);
+        }
+        const keeper = new Cat({ add() {} }, { name: 'Shopkeeper', fur: 0xa4b0be, spots: 0x57606f, eyes: 0xfeca57, pattern: 'stripes', outfits: ['topHat', 'monocle'] });
+        keeper.mesh.remove(keeper.nameTag);
+        keeper.mesh.position.set(0, 0, -1.6);
+        keeper.mesh.rotation.y = Math.PI;
+        g.add(keeper.mesh);
+        this.animate((dt, t) => { keeper.headGroup.rotation.y = Math.sin(t * 0.8) * 0.5; });
+        this.addRotatedCollider(x, z, 5.4, 4, rotY);
+    }
+
+    // The most expensive item in the shop: on a velvet pedestal under a glass dome, in a spotlight
+    buildShopShowcase(x, z, itemId) {
+        const item = this.shop && this.shop.itemsById[itemId];
+        const g = this.propGroup(x, z);
+        addMesh(g, new THREE.CylinderGeometry(1.2, 1.4, 1.2, 24), std(0x8b0000, { roughness: 0.9 }), 0, 0.6, 0);
+        addMesh(g, new THREE.CylinderGeometry(1.3, 1.3, 0.1, 24), std(0xf1c40f, { metalness: 0.8, roughness: 0.2 }), 0, 1.25, 0);
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(1.1, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+            new THREE.MeshStandardMaterial({ color: 0xdff9fb, transparent: true, opacity: 0.25, roughness: 0.05, metalness: 0.2, depthWrite: false }));
+        dome.position.y = 1.3;
+        dome.scale.y = 1.5;
+        g.add(dome);
+        const model = item ? this.buildShopItemModel(item) : new THREE.Group();
+        model.position.y = 1.2;
+        g.add(model);
+        const spot = new THREE.SpotLight(0xfff3b0, 1.4, 14, 0.4, 0.5);
+        spot.position.set(0, 9, 0);
+        spot.target = model;
+        g.add(spot);
+        if (item) {
+            const owned = this.shop.isOwned(item.id);
+            const tag = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.1), new THREE.MeshBasicMaterial({ map: createShopTagTexture(item, owned) }));
+            tag.position.set(0, 0.6, 1.42);
+            g.add(tag);
+        }
+        // Sparkles circling around the dome
+        const sparkles = [];
+        for (let i = 0; i < 8; i++) {
+            const s = addMesh(g, new THREE.OctahedronGeometry(0.1, 0), new THREE.MeshBasicMaterial({ color: 0xffd32a }));
+            sparkles.push(s);
+        }
+        this.animate((dt, t) => {
+            model.rotation.y = t * 0.8;
+            model.position.y = 1.3 + Math.sin(t * 1.5) * 0.12;
+            sparkles.forEach((s, i) => {
+                const a = t * 1.2 + (i / sparkles.length) * Math.PI * 2;
+                s.position.set(Math.cos(a) * 1.5, 1.6 + Math.sin(t * 2 + i) * 0.6, Math.sin(a) * 1.5);
+            });
+        });
+        this.addCollider(x, z, 3, 3);
     }
 }

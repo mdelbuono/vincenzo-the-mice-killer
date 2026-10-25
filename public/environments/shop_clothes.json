@@ -1,0 +1,26 @@
+{
+  "id": "shop_clothes",
+  "name": "Fashion Boutique",
+  "lights": [
+    {"type": "ambient", "color": "0xffffff", "intensity": 0.55},
+    {"type": "directional", "color": "0xffeef8", "intensity": 0.55, "position": [4, 14, 8], "castShadow": true, "shadowMapSize": 2048, "shadowCameraSize": 20},
+    {"type": "point", "color": "0xffeef8", "intensity": 0.6, "distance": 20, "position": [-9, 7, 0]},
+    {"type": "point", "color": "0xffeef8", "intensity": 0.6, "distance": 20, "position": [9, 7, 0]}
+  ],
+  "floor": {"texture": "carpet", "roughness": 0.9},
+  "ceiling": {"color": "0xfdf2ff", "roughness": 0.9},
+  "walls": {"texture": "bedroomWall", "roughness": 0.8},
+  "extras": [
+    {"type": "shopBanner", "text": "🎩 CLOTHES", "wall": "east"},
+    {"type": "bunting"}
+  ],
+  "props": [
+    {"builder": "shopDisplay", "category": "clothes", "start": 0, "count": 6, "x": -9, "z": -6, "color": "0xf8a5c2"},
+    {"builder": "shopDisplay", "category": "clothes", "start": 6, "count": 6, "x": 9, "z": -6, "color": "0xf8a5c2"},
+    {"builder": "shopDisplay", "category": "clothes", "start": 12, "count": 6, "x": -9, "z": 5, "rotY": 3.1416, "color": "0xf8a5c2"},
+    {"builder": "shopDisplay", "category": "clothes", "start": 18, "count": 6, "x": 9, "z": 5, "rotY": 3.1416, "color": "0xf8a5c2"},
+    {"builder": "wardrobe", "x": -14, "z": -11.5},
+    {"builder": "wardrobe", "x": 14, "z": 11.5},
+    {"builder": "armchair", "x": 0, "z": 11}
+  ]
+}

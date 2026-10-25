@@ -1,0 +1,27 @@
+{
+  "id": "shop_cats",
+  "name": "Cat Gallery",
+  "lights": [
+    {"type": "ambient", "color": "0xffffff", "intensity": 0.55},
+    {"type": "directional", "color": "0xfff5eb", "intensity": 0.55, "position": [4, 14, 8], "castShadow": true, "shadowMapSize": 2048, "shadowCameraSize": 20},
+    {"type": "point", "color": "0xfff5eb", "intensity": 0.6, "distance": 20, "position": [-9, 7, 0]},
+    {"type": "point", "color": "0xfff5eb", "intensity": 0.6, "distance": 20, "position": [9, 7, 0]}
+  ],
+  "floor": {"texture": "parquet", "roughness": 0.5},
+  "ceiling": {"color": "0xfdf2e9", "roughness": 0.9},
+  "walls": {"color": "0xffe0ec", "roughness": 0.8},
+  "extras": [
+    {"type": "shopBanner", "text": "🐱 CATS", "wall": "north"},
+    {"type": "shopBanner", "text": "🛒 BROKJES SHOP", "wall": "west", "at": 7},
+    {"type": "bunting"}
+  ],
+  "props": [
+    {"builder": "shopDisplay", "category": "cats", "start": 0, "count": 5, "x": 0, "z": -11},
+    {"builder": "shopDisplay", "category": "cats", "start": 5, "count": 5, "x": 4, "z": 11, "rotY": 3.1416},
+    {"builder": "shopDisplay", "category": "cats", "start": 10, "count": 5, "x": -6, "z": -3},
+    {"builder": "shopDisplay", "category": "cats", "start": 15, "count": 5, "x": 6, "z": 3.5, "rotY": 3.1416},
+    {"builder": "catTree", "x": -14.5, "z": 9},
+    {"builder": "housePlant", "x": 15, "z": -11},
+    {"builder": "housePlant", "x": -15, "z": -11}
+  ]
+}
