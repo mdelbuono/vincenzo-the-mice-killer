@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { setMaterialColor, getFurBumpTexture } from './graphics.js';
 import { createCatchPromptTexture } from './textures.js';
 
 // --- The Mice (Roam in Room, Level Difficulty Speed Scaling) ---
@@ -46,7 +47,7 @@ export class Mouse {
             const rx = (Math.random() - 0.5) * boundX * 2;
             const rz = (Math.random() - 0.5) * boundZ * 2;
             if (!this.room.checkCollision(rx, rz, 0.5)) {
-                this.position.set(rx, this.room.zeroGravity ? randomFloatHeight() : 0, rz);
+                this.position.set(rx, this.room.zeroGravity ? randomFloatHeight() : this.room.floorHeight(rx, rz), rz);
                 return;
             }
         }
@@ -94,16 +95,16 @@ export class Mouse {
     applyFur() {
         const m = this.furMat;
         if (this.golden) {
-            m.color.setHex(0xffd32a);
+            setMaterialColor(m, 'color', 0xffd32a);
             m.metalness = 0.5;
             m.roughness = 0.25;
-            m.emissive.setHex(0xb8860b);
+            setMaterialColor(m, 'emissive', 0xb8860b);
             m.emissiveIntensity = 0.5;
         } else {
-            m.color.setHex(0x7f8c8d);
+            setMaterialColor(m, 'color', 0x7f8c8d);
             m.metalness = 0;
-            m.roughness = 0.6;
-            m.emissive.setHex(0x000000);
+            m.roughness = 0.85;
+            setMaterialColor(m, 'emissive', 0x000000);
         }
     }
 
@@ -128,13 +129,13 @@ export class Mouse {
     }
 
     buildModel() {
-        this.furMat = new THREE.MeshStandardMaterial();
+        this.furMat = new THREE.MeshStandardMaterial({ bumpMap: getFurBumpTexture(), bumpScale: 0.004 });
         this.applyFur();
         const mouseMat = this.furMat;
         const pinkMat = new THREE.MeshStandardMaterial({ color: 0xffa8a8, roughness: 0.7 });
-        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.08 }); // shiny, like real eyes
 
-        const bodyGeo = new THREE.SphereGeometry(0.24, 12, 10);
+        const bodyGeo = new THREE.SphereGeometry(0.24, 24, 16);
         bodyGeo.scale(0.8, 0.7, 1.4);
         const body = new THREE.Mesh(bodyGeo, mouseMat);
         body.position.y = 0.16;
@@ -315,11 +316,12 @@ export class Mouse {
             this.mesh.position.set(this.position.x, this.position.y + Math.sin(t + this.rotationY) * 0.12, this.position.z);
             // Underwater mice swim level (wiggling), in space they tumble
             this.mesh.rotation.z = this.room.underwater ? Math.sin(this.walkCycle) * 0.12 : Math.sin(t * 0.7 + this.position.x) * 0.5;
-        } else if (isMoving) {
-            this.walkCycle += dt * (this.state === 'FLEEING' ? 22 : 14);
-            this.mesh.position.set(this.position.x, Math.abs(Math.sin(this.walkCycle)) * 0.05, this.position.z);
         } else {
-            this.mesh.position.set(this.position.x, 0, this.position.z);
+            // On the floor, which is higher on the Erasmus Bridge (catching uses 3D distance)
+            this.position.y = this.room.floorHeight(this.position.x, this.position.z);
+            if (isMoving) this.walkCycle += dt * (this.state === 'FLEEING' ? 22 : 14);
+            const hop = isMoving ? Math.abs(Math.sin(this.walkCycle)) * 0.05 : 0;
+            this.mesh.position.set(this.position.x, this.position.y + hop, this.position.z);
         }
         this.mesh.rotation.y = this.rotationY;
         this.tail.rotation.y = Math.sin(this.walkCycle * 0.8) * 0.35;

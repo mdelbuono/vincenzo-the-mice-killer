@@ -1,5 +1,8 @@
 {
+  "id": "house",
   "name": "Endless House",
+  "icon": "🏠",
+  "includesLevels": true,
   "startRoom": "living_room",
   "miceCount": 11,
   "speedMult": 1.25,
@@ -77,8 +80,18 @@
       "place": "town",
       "miceCount": 13, "speedMult": 1.45,
       "doors": [
-        { "wall": "west", "at": 0,  "to": "backyard" },
-        { "wall": "east", "at": -2, "to": "spaceship", "hidden": true }
+        { "wall": "west",  "at": 0,  "to": "backyard" },
+        { "wall": "east",  "at": -2, "to": "spaceship", "hidden": true },
+        { "wall": "south", "at": 0,  "to": "casino" }
+      ]
+    },
+    "casino": {
+      "name": "Casino", "icon": "🎰",
+      "environment": "environments/casino.json",
+      "place": "town",
+      "miceCount": 14, "speedMult": 1.5, "goldenMouseChance": 0.3,
+      "doors": [
+        { "wall": "north", "at": 0, "to": "workshop" }
       ]
     },
     "supermarket": {

@@ -63,6 +63,7 @@ export class Shop {
             selectedCat: 'cat_vincenzo',
             equipped: { hat: null, face: null, neck: null, back: null },
             nextLevel: 1,       // campaign level the start screen offers first
+            endlessWorld: 'house', // endless world the start screen offers first
             completedLevels: [] // levels cleared at least once
         };
     }
@@ -120,6 +121,13 @@ export class Shop {
     get nextLevel() { return this.data.nextLevel; }
     set nextLevel(level) {
         this.data.nextLevel = level;
+        this.persist();
+    }
+
+    // The endless world (id from endless_worlds.json) the start screen offers first
+    get endlessWorld() { return this.data.endlessWorld; }
+    set endlessWorld(id) {
+        this.data.endlessWorld = id;
         this.persist();
     }
 

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { setupRealisticRenderer, upgradeScene } from './graphics.js';
 import { sound } from './sound.js';
 import { ParticleManager } from './particles.js';
 import { LevelEnvironment } from './environment.js';
@@ -22,7 +23,9 @@ const PASSAGE_NAMES = {
     path: '🌼 Garden Path',
     road: '🛣️ Road',
     teleport: '🌀 Teleporter',
-    dive: '🐠 Aquarium Tunnel'
+    dive: '🐠 Aquarium Tunnel',
+    street: '🚋 City Street',
+    avenue: '🚕 Avenue'
 };
 
 // A wall spot for an automatically added door, away from the doors already there
@@ -84,19 +87,21 @@ class VincenzoGame {
                 shop_clothes: { name: 'Fashion Boutique', icon: '🎩', environment: 'environments/shop_clothes.json', place: 'town', miceCount: 13, doors: [{ wall: 'north', at: 0, to: 'shop_weapons', passage: 'corridor' }, { wall: 'west', at: 0, to: 'shop_surprises', passage: 'corridor' }] },
                 shop_surprises: { name: 'Surprise Corner', icon: '🎁', environment: 'environments/shop_surprises.json', place: 'town', goldenMouseChance: 0.45, goldenMouseBrokjes: 250, doors: [{ wall: 'east', at: 0, to: 'shop_clothes', passage: 'corridor' }, { wall: 'north', at: -8, to: 'shop_cats', passage: 'corridor' }] }
             } },
-            12: { id: 12, icon: '🐠', name: 'Under the Sea', environment: 'environments/underwater.json', target: 48, duration: 150, time: 150, miceCount: 13, speedMult: 2.0, brokjesPerMouse: 18, completionBrokjes: 1800, goldenMouseChance: 0.25, goldenMouseBrokjes: 250, clearIcon: '👑 🐠 🐱', clearTitle: 'OCEAN AND GALAXY CHAMPION!', clearMsg: 'All 12 levels conquered! From the living room to outer space and the bottom of the sea, Vincenzo is the greatest mouse hunter of all time!', nextBtnText: 'Play Again from Level 1' }
+            12: { id: 12, icon: '🐠', name: 'Under the Sea', environment: 'environments/underwater.json', target: 48, duration: 150, time: 150, miceCount: 13, speedMult: 2.0, brokjesPerMouse: 18, completionBrokjes: 1800, goldenMouseChance: 0.25, goldenMouseBrokjes: 250, clearIcon: '🐠 🫧', clearTitle: 'Level 12 Cleared!', clearMsg: 'The sea is safe! But the last mice swam ashore, put on bow ties and sneaked into the Brokjes Casino!', nextBtnText: 'Enter Level 13: The Casino (50 Mice)' },
+            13: { id: 13, icon: '🎰', name: 'The Casino', environment: 'environments/casino.json', target: 50, duration: 150, time: 150, miceCount: 14, speedMult: 2.1, brokjesPerMouse: 20, completionBrokjes: 2200, goldenMouseChance: 0.3, goldenMouseBrokjes: 300, clearIcon: '👑 🎰 🐱', clearTitle: 'JACKPOT CHAMPION!', clearMsg: 'All 13 levels conquered! From the living room to outer space, the bottom of the sea and the casino, Vincenzo is the greatest mouse hunter of all time!', nextBtnText: 'Play Again from Level 1' }
         };
 
-        // Endless mode: a house of rooms connected by doors (endless.json).
+        // Endless mode: worlds of rooms connected by doors (endless_worlds.json lists them:
+        // the house in endless.json, Rotterdam in endless_rotterdam.json). The player picks one.
         // A level can have several rooms too ("rooms" in levels.json), connected the same way.
-        this.endlessConfig = null;
+        this.endlessWorlds = [];   // every world that loaded
+        this.endlessConfig = null; // the world being played
         this.roomId = null;        // current room of the endless house or of a multi-room level
         this.roomChanging = false; // true while the next room is loading
         this.doorCooldown = 0;
         this.roomsVisited = 0;
         this.passage = null;       // { from, to } while walking from one room to the next
         this.foundSecrets = new Set(); // hidden doors found in this hunt ("room>otherRoom")
-        this.endlessSynced = false;
         this.huntBrokjes = 0;      // brokjes earned in the current hunt
         this.mode = 'levels';      // 'levels' or 'endless'
 
@@ -147,8 +152,7 @@ class VincenzoGame {
         this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        setupRealisticRenderer(this.renderer, this.scene);
         this.container.appendChild(this.renderer.domElement);
 
         window.addEventListener('resize', () => {
@@ -317,9 +321,9 @@ class VincenzoGame {
         return (level && level.rooms) || null;
     }
 
-    // Start of the HUD title: "♾️ Endless" or "Level 11"
+    // Start of the HUD title: "♾️ Rotterdam" or "Level 11"
     hudPrefix() {
-        return this.isEndless ? '♾️ Endless' : `Level ${this.currentLevel}`;
+        return this.isEndless ? `♾️ ${this.endlessConfig.name}` : `Level ${this.currentLevel}`;
     }
 
     sortedLevels() {
@@ -372,15 +376,45 @@ class VincenzoGame {
         this.updateStartScreenFromConfig();
     }
 
+    // Loads every endless world listed in endless_worlds.json and fills the world picker
     async loadEndlessConfig() {
-        try {
-            const response = await fetch('endless.json');
+        const fetchJson = async (url) => {
+            const response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            this.endlessConfig = await response.json();
+            return response.json();
+        };
+        let files = ['endless.json'];
+        try {
+            files = await fetchJson('endless_worlds.json');
         } catch (err) {
-            console.warn('Could not load endless.json, endless mode is not available:', err);
+            console.warn('Could not load endless_worlds.json, only the house is available:', err);
         }
-        document.getElementById('start-endless-btn').disabled = !this.endlessConfig;
+        const worlds = await Promise.all(files.map(file => fetchJson(file).catch(err => {
+            console.warn(`Could not load endless world "${file}":`, err);
+            return null;
+        })));
+        this.endlessWorlds = worlds.filter(Boolean).map((world, i) => ({ ...world, id: world.id || `world${i}` }));
+
+        this.endlessSelect.innerHTML = '';
+        this.endlessWorlds.forEach(world => {
+            const option = document.createElement('option');
+            option.value = world.id;
+            option.textContent = `${world.icon || '♾️'} ${world.name}`;
+            this.endlessSelect.appendChild(option);
+        });
+        this.showSavedEndlessWorld();
+        document.getElementById('start-endless-btn').disabled = this.endlessWorlds.length === 0;
+    }
+
+    // The world picker shows the world the current player last played
+    showSavedEndlessWorld() {
+        if (!this.endlessWorlds.length) return;
+        const saved = this.endlessWorlds.find(w => w.id === this.shop.endlessWorld);
+        this.endlessSelect.value = (saved || this.endlessWorlds[0]).id;
+    }
+
+    selectedEndlessWorld() {
+        return this.endlessWorlds.find(w => w.id === this.endlessSelect.value) || this.endlessWorlds[0];
     }
 
     updateStartScreenFromConfig() {
@@ -398,6 +432,7 @@ class VincenzoGame {
         });
         this.levelSelect.value = this.currentLevel;
         this.updateLevelButton();
+        this.showSavedEndlessWorld();
 
         const missionBox = document.getElementById('start-mission-desc');
         if (missionBox) {
@@ -412,7 +447,7 @@ class VincenzoGame {
                 html += `<li>Level ${lvlKey} (${cfg.name}): Catch <strong>${cfg.target} mice</strong> in ${durText}${extra}${bonusStr}.${done}</li>`;
             });
             html += '<li>Pick any level from the list to start with. When you clear a level, the next one follows. After the last level you start again from Level 1.</li>';
-            html += '<li>♾️ <strong>Endless mode</strong>: no clock and no target. Walk through the glowing doors, down hallways, stairs, garden paths and even a teleporter to visit all the places! Some ways out are 🔍 <strong>secret</strong>...</li>';
+            html += '<li>♾️ <strong>Endless mode</strong>: no clock and no target. Pick a world: the 🏠 <strong>house</strong> with all the places of the levels, the city of 🌉 <strong>Rotterdam</strong> with the Erasmus Bridge, or 🗽 <strong>New York</strong> with Times Square and the Statue of Liberty. Walk through the glowing doors, down hallways, stairs, streets and even a teleporter! Some ways out are 🔍 <strong>secret</strong>...</li>';
             html += '<li>Each mouse caught awards <strong>brokjes</strong>. A rare ✨ <strong>golden mouse</strong> is faster but worth much more!</li>';
             html += '<li>Press <strong>SPACEBAR</strong> when near a mouse to pounce and catch it!</li>';
             html += '<li>Spend your brokjes in the <strong>🛒 Shop</strong> (top-left): new cats, boosts, sneezes, a blaster and clothes!</li></ul>';
@@ -436,6 +471,7 @@ class VincenzoGame {
     setupUI() {
         this.levelSelect = document.getElementById('level-select');
         this.levelSelect.addEventListener('change', () => this.updateLevelButton());
+        this.endlessSelect = document.getElementById('endless-select');
         this.fadeEl = document.getElementById('room-fade');
 
         document.getElementById('start-levels-btn').addEventListener('click', () => {
@@ -583,8 +619,11 @@ class VincenzoGame {
 
     // Endless mode: no clock, no target, roam the house room by room
     async startEndless() {
-        if (!this.endlessConfig) return;
-        this.syncEndlessRooms();
+        const world = this.selectedEndlessWorld();
+        if (!world) return;
+        this.endlessConfig = world;
+        this.shop.endlessWorld = world.id; // the picker offers this world again next time
+        if (world.includesLevels) this.syncEndlessRooms();
         this.mode = 'endless';
         this.resetHunt();
         this.roomsVisited = 0;
@@ -594,14 +633,15 @@ class VincenzoGame {
     }
 
     /**
-     * Every level's environment is also a room in endless mode. Rooms missing
+     * Every level's environment is also a room of the endless house (the world
+     * with "includesLevels"). Rooms missing
      * from endless.json (a newly added level) are added here, with a door to
      * and from the room of the level before. A level with several rooms brings
      * all of them, with the doors between them.
      */
     syncEndlessRooms() {
-        if (this.endlessSynced) return;
-        this.endlessSynced = true;
+        if (this.endlessConfig.synced) return;
+        this.endlessConfig.synced = true;
         const rooms = this.endlessConfig.rooms;
         const findRoom = environment => Object.keys(rooms).find(key => rooms[key].environment === environment);
         const freeId = id => { while (rooms[id]) id += '_'; return id; };
@@ -762,7 +802,7 @@ class VincenzoGame {
         this.screens.pause.style.display = 'none';
         sound.playCatchSuccess();
 
-        document.getElementById('game-over-icon').textContent = '🏠 ♾️';
+        document.getElementById('game-over-icon').textContent = `${this.endlessConfig.icon || '🏠'} ♾️`;
         document.getElementById('game-over-title').textContent = 'Great Hunt!';
         const secrets = this.foundSecrets.size / 2;
         const secretsText = secrets > 0 ? `, found ${secrets} secret ${secrets === 1 ? 'passage' : 'passages'}` : '';
@@ -1092,8 +1132,9 @@ class VincenzoGame {
         this.snapCamera = false;
         const catRot = this.vincenzo.rotationY;
 
-        // In first-person the cat's own head would block the view
+        // In first-person the cat's own head would block the view, from the top the cube houses
         this.vincenzo.mesh.visible = this.cameraMode !== 2;
+        this.room.overheads.forEach(obj => { obj.visible = this.cameraMode !== 1; });
 
         if (this.cameraMode === 0) {
             // 3rd Person Follow
@@ -1214,11 +1255,13 @@ class VincenzoGame {
         this.updateCamera(dt);
         this.drawRadar();
 
+        upgradeScene(this.scene); // realistic colors for anything new (see graphics.js)
         this.renderer.render(this.scene, this.camera);
     }
 }
 
 // Initialize Game on Window Load
 window.addEventListener('DOMContentLoaded', () => {
-    new VincenzoGame();
+    const game = new VincenzoGame();
+    if (import.meta.env.DEV) window.game = game; // handy for debugging in the dev server
 });

@@ -271,9 +271,29 @@
     "goldenMouseChance": 0.25,
     "goldenMouseBrokjes": 250,
     "description": "Catch 48 swimming mice in 2.5 minutes at the bottom of the sea! Q swims up, Z swims down.",
-    "clearIcon": "👑 🐠 🐱",
-    "clearTitle": "OCEAN AND GALAXY CHAMPION!",
-    "clearMsg": "All 12 levels conquered! From the living room to outer space and the bottom of the sea, Vincenzo is the greatest mouse hunter of all time!",
+    "clearIcon": "🐠 🫧",
+    "clearTitle": "Level 12 Cleared!",
+    "clearMsg": "The sea is safe! But the last mice swam ashore, put on bow ties and sneaked into the Brokjes Casino!",
+    "nextBtnText": "Enter Level 13: The Casino (50 Mice)"
+  },
+  "13": {
+    "id": 13,
+    "icon": "🎰",
+    "name": "The Casino",
+    "environment": "environments/casino.json",
+    "target": 50,
+    "duration": 150,
+    "time": 150,
+    "miceCount": 14,
+    "speedMult": 2.1,
+    "brokjesPerMouse": 20,
+    "completionBrokjes": 2200,
+    "goldenMouseChance": 0.3,
+    "goldenMouseBrokjes": 300,
+    "description": "Catch 50 mice in 2.5 minutes between the slot machines, roulette wheels and card tables of the Brokjes Casino! Lots of golden mice: jackpot!",
+    "clearIcon": "👑 🎰 🐱",
+    "clearTitle": "JACKPOT CHAMPION!",
+    "clearMsg": "All 13 levels conquered! From the living room to outer space, the bottom of the sea and the casino, Vincenzo is the greatest mouse hunter of all time!",
     "nextBtnText": "Play Again from Level 1"
   }
 }

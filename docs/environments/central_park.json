@@ -1,0 +1,42 @@
+{
+  "id": "central_park",
+  "name": "Central Park",
+  "sky": "0x8fc8f0",
+  "fogColor": "0xc8e0f0",
+  "fogDensity": 0.006,
+  "lights": [
+    { "type": "hemisphere", "color": "0xdff2ff", "groundColor": "0x4a8a32", "intensity": 0.6 },
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.15 },
+    {
+      "type": "directional",
+      "color": "0xfff1d0",
+      "intensity": 0.95,
+      "position": [16, 30, 12],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 22
+    }
+  ],
+  "floor": { "texture": "grass", "roughness": 0.95 },
+  "ceiling": null,
+  "walls": { "texture": "basementWall", "roughness": 0.9, "height": 1.6 },
+  "extras": [
+    { "type": "sun" },
+    { "type": "clouds" },
+    { "type": "bowBridge" },
+    { "type": "nycSkyline", "ground": true }
+  ],
+  "props": [
+    { "builder": "bigTree",    "x": -13, "z": -10 },
+    { "builder": "bigTree",    "x": 13,  "z": -10 },
+    { "builder": "bigTree",    "x": 13,  "z": 9 },
+    { "builder": "bigTree",    "x": -14, "z": 8 },
+    { "builder": "bench",      "x": 4,   "z": 11.6, "rotY": 3.1416 },
+    { "builder": "bench",      "x": -3,  "z": -11.6 },
+    { "builder": "streetLamp", "x": -3,  "z": 5.5 },
+    { "builder": "streetLamp", "x": 3,   "z": 5.5 },
+    { "builder": "streetLamp", "x": 3,   "z": -10.5 },
+    { "builder": "hotDogCart", "x": 8,   "z": 7,    "rotY": 0 },
+    { "builder": "flowerBed",  "x": -8,  "z": 6.5 }
+  ]
+}

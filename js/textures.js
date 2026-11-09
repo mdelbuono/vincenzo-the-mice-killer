@@ -1006,3 +1006,444 @@ export function createIconTexture(icon, background = '#ffffff') {
     ctx.fillText(icon, 64, 70);
     return new THREE.CanvasTexture(canvas);
 }
+
+// ---------- Rotterdam (endless world) ----------
+
+// Dutch street bricks ("klinkers") laid in a herringbone pattern
+export function createCobblesTexture() {
+    const [canvas, ctx] = makeCanvas();
+    ctx.fillStyle = '#4a4440';
+    ctx.fillRect(0, 0, 512, 512);
+    const bw = 32;
+    const bh = 16;
+    const colors = ['#9c4a3a', '#a8553f', '#8e4334', '#b0614a', '#7f3d30'];
+    for (let row = -2; row < 20; row++) {
+        for (let col = -2; col < 20; col++) {
+            const x = col * bw + (row % 2) * bh;
+            const y = row * bw;
+            [[x, y, bw, bh], [x + bw - bh, y + bh, bh, bw]].forEach(([bx, by, w, h]) => {
+                ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)];
+                ctx.fillRect(bx + 1, by + 1, w - 2, h - 2);
+            });
+        }
+    }
+    for (let i = 0; i < 3000; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+    }
+    return repeatingTexture(canvas, 5, 4);
+}
+
+// Red-brown brick wall
+export function createBrickTexture() {
+    const [canvas, ctx] = makeCanvas();
+    ctx.fillStyle = '#cfc6b8';
+    ctx.fillRect(0, 0, 512, 512);
+    const bw = 64;
+    const bh = 24;
+    for (let row = 0; row < 512 / bh + 1; row++) {
+        for (let col = -1; col < 512 / bw + 1; col++) {
+            const x = col * bw + (row % 2) * (bw / 2);
+            const shade = Math.floor(Math.random() * 30);
+            ctx.fillStyle = `rgb(${150 + shade}, ${70 + shade / 2}, ${50 + shade / 3})`;
+            ctx.fillRect(x + 2, row * bh + 2, bw - 4, bh - 4);
+        }
+    }
+    return repeatingTexture(canvas, 4, 1);
+}
+
+// The Erasmus Bridge deck seen from above (the texture runs along x):
+// sidewalk, red bike lane, road with tram rails, red bike lane, sidewalk
+export function createBridgeDeckTexture() {
+    const [canvas, ctx] = makeCanvas();
+    const lanes = [
+        [0, 60, '#9ea4a8'],     // sidewalk
+        [60, 130, '#b5483b'],   // bike lane
+        [130, 382, '#3c3f44'],  // road
+        [382, 452, '#b5483b'],  // bike lane
+        [452, 512, '#9ea4a8']   // sidewalk
+    ];
+    lanes.forEach(([y1, y2, c]) => { ctx.fillStyle = c; ctx.fillRect(0, y1, 512, y2 - y1); });
+    for (let i = 0; i < 6000; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)';
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+    }
+    // White lines between the lanes, bicycle symbols on the bike lanes
+    ctx.fillStyle = '#f5f6fa';
+    [128, 382].forEach(y => ctx.fillRect(0, y - 2, 512, 4));
+    for (let x = 0; x < 512; x += 64) ctx.fillRect(x, 254, 34, 4);
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 3;
+    [95, 417].forEach(y => {
+        [128, 384].forEach(x => {
+            ctx.beginPath(); ctx.arc(x - 12, y, 9, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(x + 12, y, 9, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x - 12, y); ctx.lineTo(x, y - 10); ctx.lineTo(x + 12, y); ctx.stroke();
+        });
+    });
+    // Tram rails
+    ctx.fillStyle = '#c8ccd0';
+    [175, 205, 307, 337].forEach(y => ctx.fillRect(0, y, 512, 4));
+    return repeatingTexture(canvas, 4, 1);
+}
+
+// The cube houses: yellow walls with windows in grey frames
+export function createCubeFacadeTexture() {
+    const [canvas, ctx] = makeCanvas(256);
+    ctx.fillStyle = '#f2c230';
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.strokeStyle = '#d9a91c';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(4, 4, 248, 248);
+    [[40, 40, 70, 60], [146, 40, 70, 60], [40, 150, 176, 60]].forEach(([x, y, w, h]) => {
+        ctx.fillStyle = '#6b7178';
+        ctx.fillRect(x - 6, y - 6, w + 12, h + 12);
+        const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+        grad.addColorStop(0, '#bfe6ff');
+        grad.addColorStop(1, '#4f7ea8');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = '#6b7178';
+        ctx.fillRect(x + w / 2 - 2, y, 4, h);
+    });
+    return new THREE.CanvasTexture(canvas);
+}
+
+// The giant fruit-and-flower painting on the inside of the Markthal arch,
+// with the windows of the apartments in it
+export function createMarkthalMuralTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    const sky = ctx.createLinearGradient(0, 0, 0, 512);
+    sky.addColorStop(0, '#1f6fb2');
+    sky.addColorStop(0.5, '#59b3e6');
+    sky.addColorStop(1, '#1f6fb2');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 1024, 512);
+    const things = [
+        ['#e74c3c', 'apple'], ['#f39c12', 'orange'], ['#f1c40f', 'banana'], ['#8e44ad', 'grape'],
+        ['#e84393', 'tulip'], ['#27ae60', 'pear'], ['#d63031', 'strawberry'], ['#fdcb6e', 'flower'],
+        ['#6c5ce7', 'grape'], ['#ff7675', 'tulip'], ['#00b894', 'leaf'], ['#e17055', 'carrot']
+    ];
+    for (let i = 0; i < 90; i++) {
+        const [color, kind] = things[i % things.length];
+        const x = Math.random() * 1024;
+        const y = Math.random() * 512;
+        const r = 20 + Math.random() * 38;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.random() * Math.PI * 2);
+        ctx.fillStyle = color;
+        if (kind === 'banana') {
+            ctx.lineWidth = r * 0.45;
+            ctx.strokeStyle = color;
+            ctx.beginPath(); ctx.arc(0, 0, r, 0.2, Math.PI - 0.2); ctx.stroke();
+        } else if (kind === 'grape') {
+            for (let g = 0; g < 9; g++) {
+                ctx.beginPath();
+                ctx.arc((g % 3 - 1) * r * 0.35 + (Math.floor(g / 3) % 2) * r * 0.17, Math.floor(g / 3) * r * 0.32 - r * 0.3, r * 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (kind === 'tulip') {
+            ctx.fillStyle = '#2e8b57';
+            ctx.fillRect(-r * 0.06, 0, r * 0.12, r * 1.4);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(-r * 0.5, -r * 0.6); ctx.lineTo(-r * 0.25, -r * 0.2); ctx.lineTo(0, -r * 0.7);
+            ctx.lineTo(r * 0.25, -r * 0.2); ctx.lineTo(r * 0.5, -r * 0.6);
+            ctx.quadraticCurveTo(r * 0.55, r * 0.2, 0, r * 0.2);
+            ctx.quadraticCurveTo(-r * 0.55, r * 0.2, -r * 0.5, -r * 0.6);
+            ctx.fill();
+        } else if (kind === 'flower') {
+            for (let p = 0; p < 6; p++) {
+                const a = (p / 6) * Math.PI * 2;
+                ctx.beginPath(); ctx.ellipse(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, r * 0.4, r * 0.2, a, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.fillStyle = '#e67e22';
+            ctx.beginPath(); ctx.arc(0, 0, r * 0.25, 0, Math.PI * 2); ctx.fill();
+        } else if (kind === 'leaf' || kind === 'carrot') {
+            ctx.beginPath(); ctx.ellipse(0, 0, r * 0.3, r, 0, 0, Math.PI * 2); ctx.fill();
+        } else {
+            ctx.beginPath(); ctx.arc(0, 0, r * 0.7, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.beginPath(); ctx.arc(-r * 0.25, -r * 0.25, r * 0.2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#27ae60';
+            ctx.beginPath(); ctx.ellipse(r * 0.15, -r * 0.8, r * 0.25, r * 0.1, 0.5, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+    }
+    // Rows of square apartment windows
+    for (let row = 0; row < 6; row++) {
+        for (let col = 0; col < 16; col++) {
+            if ((row * 7 + col * 3) % 5 === 0) continue;
+            const x = 20 + col * 64;
+            const y = 18 + row * 84;
+            ctx.fillStyle = 'rgba(30, 40, 55, 0.9)';
+            ctx.fillRect(x, y, 26, 26);
+            ctx.fillStyle = 'rgba(255, 230, 160, 0.8)';
+            ctx.fillRect(x + 3, y + 3, 20, 20);
+        }
+    }
+    return new THREE.CanvasTexture(canvas);
+}
+
+// Ribbed steel side of a shipping container (white, the material color tints it)
+export function createContainerTexture() {
+    const [canvas, ctx] = makeCanvas(256);
+    for (let x = 0; x < 256; x += 16) {
+        const grad = ctx.createLinearGradient(x, 0, x + 16, 0);
+        grad.addColorStop(0, '#9a9a9a');
+        grad.addColorStop(0.5, '#ffffff');
+        grad.addColorStop(1, '#9a9a9a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, 0, 16, 256);
+    }
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(0, 0, 256, 8);
+    ctx.fillRect(0, 248, 256, 8);
+    for (let i = 0; i < 8; i++) {
+        const x = Math.random() * 256;
+        const grad = ctx.createLinearGradient(x, 0, x, 120);
+        grad.addColorStop(0, 'rgba(120,60,20,0.35)');
+        grad.addColorStop(1, 'rgba(120,60,20,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, 8, 6, 120);
+    }
+    return new THREE.CanvasTexture(canvas);
+}
+
+// Glass office tower: a grid of windows, some lit
+export function createGlassFacadeTexture(tint = '#7fa7c9') {
+    const [canvas, ctx] = makeCanvas(256);
+    ctx.fillStyle = '#2f3b48';
+    ctx.fillRect(0, 0, 256, 256);
+    for (let y = 0; y < 256; y += 16) {
+        for (let x = 0; x < 256; x += 16) {
+            ctx.fillStyle = Math.random() > 0.85 ? '#ffe8a8' : tint;
+            ctx.globalAlpha = 0.6 + Math.random() * 0.4;
+            ctx.fillRect(x + 2, y + 2, 12, 11);
+        }
+    }
+    ctx.globalAlpha = 1;
+    return repeatingTexture(canvas, 1, 1);
+}
+
+// Dutch street-name sign: white letters on blue with a white border (or other colors)
+export function createStreetSignTexture(text, background = '#1e4fa3', color = '#ffffff') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = background;
+    ctx.fillRect(0, 0, 512, 128);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 8;
+    ctx.strokeRect(10, 10, 492, 108);
+    ctx.fillStyle = color;
+    ctx.font = 'bold 58px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 256, 68, 470);
+    return new THREE.CanvasTexture(canvas);
+}
+
+// ---------- New York (endless world) ----------
+
+// A bright Times Square billboard: big text with a colorful background
+export function createBillboardTexture(text, background = '#e84393', color = '#ffffff', sub = '') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 512, 256);
+    grad.addColorStop(0, background);
+    grad.addColorStop(1, '#1e1e2e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 256);
+    // Light bulbs around the edge
+    ctx.fillStyle = '#fff6c8';
+    for (let x = 12; x < 512; x += 24) {
+        ctx.beginPath(); ctx.arc(x, 10, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x, 246, 5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = color;
+    ctx.font = 'bold 84px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 256, sub ? 110 : 132, 480);
+    if (sub) {
+        ctx.font = 'bold 36px "Segoe UI", system-ui, sans-serif';
+        ctx.fillStyle = '#ffd32a';
+        ctx.fillText(sub, 256, 190, 480);
+    }
+    return new THREE.CanvasTexture(canvas);
+}
+
+// A news ticker: glowing letters on black, wraps around so it can scroll
+export function createTickerTexture(text) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0b0b10';
+    ctx.fillRect(0, 0, 1024, 64);
+    ctx.fillStyle = '#ffb142';
+    ctx.font = 'bold 40px "Segoe UI", system-ui, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 10, 34);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    return texture;
+}
+
+// Old New York buildings: stone and brick with rows of windows and fire escapes
+export function createNycFacadeTexture() {
+    const [canvas, ctx] = makeCanvas();
+    const colors = ['#8a5a44', '#a9876a', '#6f4e3d', '#b9a48a'];
+    for (let b = 0; b < 4; b++) {
+        ctx.fillStyle = colors[b];
+        ctx.fillRect(b * 128, 0, 128, 512);
+        for (let y = 24; y < 512; y += 56) {
+            for (let x = b * 128 + 14; x < b * 128 + 120; x += 36) {
+                ctx.fillStyle = '#e8e2d6';
+                ctx.fillRect(x - 3, y - 3, 26, 38);
+                ctx.fillStyle = Math.random() > 0.8 ? '#ffe8a8' : '#3d4f63';
+                ctx.fillRect(x, y, 20, 32);
+            }
+            // Fire escape balcony
+            if (b % 2 === 0) {
+                ctx.fillStyle = '#2d3436';
+                ctx.fillRect(b * 128 + 8, y + 36, 112, 4);
+            }
+        }
+    }
+    return repeatingTexture(canvas, 2, 1);
+}
+
+// Subway station tiles: white tiles with a colored mosaic band and the station name
+export function createSubwayTileTexture(name = 'TIMES SQ - 42 ST') {
+    const [canvas, ctx] = makeCanvas();
+    ctx.fillStyle = '#d9d6cc';
+    ctx.fillRect(0, 0, 512, 512);
+    for (let y = 0; y < 512; y += 16) {
+        for (let x = (y / 16) % 2 ? -16 : 0; x < 512; x += 32) {
+            ctx.fillStyle = '#f4f1e8';
+            ctx.fillRect(x + 1, y + 1, 30, 14);
+        }
+    }
+    ctx.fillStyle = '#7a4a2a';
+    ctx.fillRect(0, 150, 512, 90);
+    ctx.fillStyle = '#c9a34a';
+    ctx.fillRect(0, 156, 512, 6);
+    ctx.fillRect(0, 228, 512, 6);
+    ctx.fillStyle = '#f4f1e8';
+    ctx.font = 'bold 50px "Segoe UI", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(name, 256, 196, 490);
+    return repeatingTexture(canvas, 3, 1);
+}
+
+// ---------- Casino (level 13) ----------
+
+// Busy casino carpet: deep red with gold and teal shapes
+export function createCasinoCarpetTexture() {
+    const [canvas, ctx] = makeCanvas();
+    ctx.fillStyle = '#5a0f1e';
+    ctx.fillRect(0, 0, 512, 512);
+    for (let y = 0; y < 512; y += 64) {
+        for (let x = 0; x < 512; x += 64) {
+            const cx = x + 32;
+            const cy = y + 32;
+            ctx.fillStyle = '#c9a34a';
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 22); ctx.lineTo(cx + 22, cy); ctx.lineTo(cx, cy + 22); ctx.lineTo(cx - 22, cy);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#1a7a74';
+            ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#e8b7c0';
+            ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(201,163,74,0.45)';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(cx, cy, 28, 0, Math.PI * 2); ctx.stroke();
+        }
+    }
+    return repeatingTexture(canvas, 5, 4);
+}
+
+// Dark red wall with gold stripes and little diamond shapes
+export function createCasinoWallTexture() {
+    const [canvas, ctx] = makeCanvas();
+    ctx.fillStyle = '#3d0a14';
+    ctx.fillRect(0, 0, 512, 512);
+    for (let x = 0; x < 512; x += 64) {
+        ctx.fillStyle = '#c9a34a';
+        ctx.fillRect(x, 0, 4, 512);
+        for (let y = 32; y < 512; y += 64) {
+            ctx.fillStyle = 'rgba(201,163,74,0.5)';
+            ctx.beginPath();
+            ctx.moveTo(x + 32, y - 12); ctx.lineTo(x + 44, y); ctx.lineTo(x + 32, y + 12); ctx.lineTo(x + 20, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+    return repeatingTexture(canvas, 6, 1.5);
+}
+
+// One slot machine reel: a strip of symbols that wraps around, so it can spin
+export function createSlotReelTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 768;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fffdf5';
+    ctx.fillRect(0, 0, 128, 768);
+    ['🍒', '7️⃣', '🔔', '⭐', '🧀', '🐭'].forEach((symbol, i) => {
+        ctx.font = '84px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(symbol, 64, i * 128 + 68);
+        ctx.fillStyle = '#d9d2bd';
+        ctx.fillRect(0, i * 128, 128, 3);
+        ctx.fillStyle = '#fffdf5';
+    });
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 0.5);
+    return texture;
+}
+
+// Roulette wheel seen from above: red and black pockets with one green zero
+export function createRouletteTexture() {
+    const [canvas, ctx] = makeCanvas();
+    const c = 256;
+    ctx.fillStyle = '#5d3a1a';
+    ctx.fillRect(0, 0, 512, 512);
+    const pockets = 37;
+    for (let i = 0; i < pockets; i++) {
+        const a1 = (i / pockets) * Math.PI * 2;
+        const a2 = ((i + 1) / pockets) * Math.PI * 2;
+        ctx.fillStyle = i === 0 ? '#1e8a4a' : (i % 2 ? '#c0392b' : '#1e1e1e');
+        ctx.beginPath();
+        ctx.moveTo(c, c);
+        ctx.arc(c, c, 240, a1, a2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.save();
+        ctx.translate(c, c);
+        ctx.rotate((a1 + a2) / 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(String(i), 215, 6);
+        ctx.restore();
+    }
+    ctx.fillStyle = '#8a5a2b';
+    ctx.beginPath(); ctx.arc(c, c, 150, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#c9a34a';
+    ctx.beginPath(); ctx.arc(c, c, 40, 0, Math.PI * 2); ctx.fill();
+    return new THREE.CanvasTexture(canvas);
+}

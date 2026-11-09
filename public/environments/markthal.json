@@ -1,0 +1,43 @@
+{
+  "id": "markthal",
+  "name": "Markthal",
+  "sky": "0x9ecbea",
+  "fogColor": "0xc8dcea",
+  "fogDensity": 0.008,
+  "lights": [
+    { "type": "hemisphere", "color": "0xfff6e0", "groundColor": "0x8d6e63", "intensity": 0.6 },
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.25 },
+    {
+      "type": "directional",
+      "color": "0xfff1d0",
+      "intensity": 0.6,
+      "position": [10, 30, 6],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 20
+    },
+    { "type": "point", "color": "0xffd9a0", "intensity": 0.7, "distance": 18, "position": [-9, 8, 0] },
+    { "type": "point", "color": "0xffd9a0", "intensity": 0.7, "distance": 18, "position": [9, 8, 0] }
+  ],
+  "floor": { "texture": "supermarketFloor", "roughness": 0.4 },
+  "ceiling": null,
+  "walls": null,
+  "extras": [
+    { "type": "markthalArch" },
+    { "type": "rotterdamSkyline", "ground": true }
+  ],
+  "props": [
+    { "builder": "marketStall",   "x": -11, "z": -6, "goods": "cheese" },
+    { "builder": "marketStall",   "x": -4,  "z": -6, "goods": "flowers" },
+    { "builder": "marketStall",   "x": 3,   "z": -6, "goods": "fish" },
+    { "builder": "marketStall",   "x": 10,  "z": -6, "goods": "stroopwafels" },
+    { "builder": "marketStall",   "x": -11, "z": 6,  "goods": "fruit",   "rotY": 3.1416 },
+    { "builder": "marketStall",   "x": -4,  "z": 6,  "goods": "cheese",  "rotY": 3.1416 },
+    { "builder": "marketStall",   "x": 3,   "z": 6,  "goods": "flowers", "rotY": 3.1416 },
+    { "builder": "marketStall",   "x": 10,  "z": 6,  "goods": "fish",    "rotY": 3.1416 },
+    { "builder": "fruitStand",    "x": -7,  "z": -10.4 },
+    { "builder": "cheeseDisplay", "x": 6,   "z": 10.4 },
+    { "builder": "bench",         "x": 0,   "z": -10.8 },
+    { "builder": "trashBin",      "x": -1,  "z": 11 }
+  ]
+}

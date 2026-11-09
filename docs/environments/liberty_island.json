@@ -1,0 +1,42 @@
+{
+  "id": "liberty_island",
+  "name": "Liberty Island",
+  "sky": "0x8fc8f0",
+  "fogColor": "0xc8e0f0",
+  "fogDensity": 0.005,
+  "lights": [
+    { "type": "hemisphere", "color": "0xdff2ff", "groundColor": "0x0a3d62", "intensity": 0.6 },
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.15 },
+    {
+      "type": "directional",
+      "color": "0xfff1d0",
+      "intensity": 1.0,
+      "position": [14, 30, 16],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 24
+    }
+  ],
+  "floor": { "texture": "grass", "roughness": 0.95 },
+  "ceiling": null,
+  "walls": { "texture": "concrete", "roughness": 0.9, "height": 1.2 },
+  "extras": [
+    { "type": "sun", "position": [50, 45, 60] },
+    { "type": "clouds" },
+    { "type": "sea" },
+    { "type": "seagulls" },
+    { "type": "ferry" },
+    { "type": "nycSkyline", "water": true }
+  ],
+  "props": [
+    { "builder": "statueOfLiberty", "x": 0,   "z": -3 },
+    { "builder": "flagpole",        "x": -12, "z": -9 },
+    { "builder": "bench",           "x": -9,  "z": 10.5, "rotY": 3.1416 },
+    { "builder": "bench",           "x": 9,   "z": 10.5, "rotY": 3.1416 },
+    { "builder": "hotDogCart",      "x": 12,  "z": -8,   "rotY": -1.5708 },
+    { "builder": "streetLamp",      "x": -7,  "z": 6.5 },
+    { "builder": "streetLamp",      "x": 7,   "z": 6.5 },
+    { "builder": "bigTree",         "x": -13, "z": 8 },
+    { "builder": "bigTree",         "x": 13,  "z": 8 }
+  ]
+}

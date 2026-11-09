@@ -1,0 +1,55 @@
+{
+  "id": "newyork",
+  "name": "New York",
+  "icon": "🗽",
+  "startRoom": "times_square",
+  "miceCount": 12,
+  "speedMult": 1.4,
+  "brokjesPerMouse": 10,
+  "goldenMouseChance": 0.15,
+  "goldenMouseBrokjes": 60,
+  "milestoneEvery": 25,
+  "milestoneBrokjes": 100,
+  "rooms": {
+    "times_square": {
+      "name": "Times Square", "icon": "🌃",
+      "environment": "environments/times_square.json",
+      "place": "nyc",
+      "miceCount": 13, "speedMult": 1.4,
+      "doors": [
+        { "wall": "west", "at": 0, "to": "central_park" },
+        { "wall": "east", "at": 0, "to": "subway" }
+      ]
+    },
+    "central_park": {
+      "name": "Central Park", "icon": "🌳",
+      "environment": "environments/central_park.json",
+      "place": "nyc",
+      "miceCount": 13, "speedMult": 1.4,
+      "doors": [
+        { "wall": "east",  "at": 0,  "to": "times_square" },
+        { "wall": "south", "at": -8, "to": "subway", "hidden": true }
+      ]
+    },
+    "subway": {
+      "name": "Subway Station", "icon": "🚇",
+      "environment": "environments/subway.json",
+      "place": "nyc",
+      "miceCount": 14, "speedMult": 1.5,
+      "doors": [
+        { "wall": "west",  "at": 3, "to": "times_square" },
+        { "wall": "east",  "at": 3, "to": "liberty_island" },
+        { "wall": "south", "at": 9, "to": "central_park", "hidden": true }
+      ]
+    },
+    "liberty_island": {
+      "name": "Liberty Island", "icon": "🗽",
+      "environment": "environments/liberty_island.json",
+      "place": "nyc",
+      "miceCount": 13, "speedMult": 1.45,
+      "doors": [
+        { "wall": "west", "at": 0, "to": "subway" }
+      ]
+    }
+  }
+}

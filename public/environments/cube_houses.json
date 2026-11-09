@@ -1,0 +1,46 @@
+{
+  "id": "cube_houses",
+  "name": "Cube Houses",
+  "sky": "0x9ecbea",
+  "fogColor": "0xc8dcea",
+  "fogDensity": 0.006,
+  "lights": [
+    { "type": "hemisphere", "color": "0xdff2ff", "groundColor": "0x6d4c41", "intensity": 0.6 },
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.18 },
+    {
+      "type": "directional",
+      "color": "0xfff1d0",
+      "intensity": 0.95,
+      "position": [16, 30, 10],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 22
+    }
+  ],
+  "floor": { "texture": "cobbles", "roughness": 0.85 },
+  "ceiling": null,
+  "walls": { "texture": "brick", "roughness": 0.9, "height": 3 },
+  "extras": [
+    { "type": "sun" },
+    { "type": "clouds" },
+    { "type": "rotterdamSkyline", "ground": true }
+  ],
+  "props": [
+    { "builder": "cubeHouse",   "x": -13,   "z": -6 },
+    { "builder": "cubeHouse",   "x": -6.5,  "z": -6 },
+    { "builder": "cubeHouse",   "x": 0,     "z": -6 },
+    { "builder": "cubeHouse",   "x": 6.5,   "z": -6 },
+    { "builder": "cubeHouse",   "x": 13,    "z": -6 },
+    { "builder": "cubeHouse",   "x": -9.75, "z": -0.4 },
+    { "builder": "cubeHouse",   "x": -3.25, "z": -0.4 },
+    { "builder": "cubeHouse",   "x": 3.25,  "z": -0.4 },
+    { "builder": "cubeHouse",   "x": 9.75,  "z": -0.4 },
+    { "builder": "pencilTower", "x": 13.5,  "z": 9.5 },
+    { "builder": "haringCart",  "x": -11,   "z": 9.5 },
+    { "builder": "bikeRack",    "x": -2,    "z": 10.8 },
+    { "builder": "bench",       "x": 5,     "z": 11.6, "rotY": 3.1416 },
+    { "builder": "streetLamp",  "x": -6,    "z": 6.5 },
+    { "builder": "streetLamp",  "x": 7.5,   "z": 6.5 },
+    { "builder": "trashBin",    "x": 9,     "z": 11.5 }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "id": "subway",
+  "name": "Subway Station",
+  "lights": [
+    { "type": "ambient", "color": "0xfff8e8", "intensity": 0.5 },
+    { "type": "hemisphere", "color": "0xfff6e0", "groundColor": "0x4a4a48", "intensity": 0.4 },
+    {
+      "type": "directional",
+      "color": "0xf0f6ff",
+      "intensity": 0.4,
+      "position": [6, 20, 8],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 20
+    },
+    { "type": "point", "color": "0xeaf4ff", "intensity": 0.7, "distance": 16, "position": [-9, 5, 2] },
+    { "type": "point", "color": "0xeaf4ff", "intensity": 0.7, "distance": 16, "position": [9, 5, 2] }
+  ],
+  "floor": { "texture": "concrete", "roughness": 0.8 },
+  "ceiling": { "color": "0x4a4a48", "roughness": 0.9 },
+  "walls": { "texture": "subwayTiles", "roughness": 0.4, "height": 6 },
+  "extras": [
+    { "type": "fluorescentLights" },
+    { "type": "subwayTracks" }
+  ],
+  "props": [
+    { "builder": "subwayPillar", "x": -12, "z": -4 },
+    { "builder": "subwayPillar", "x": -6,  "z": -4 },
+    { "builder": "subwayPillar", "x": 0,   "z": -4 },
+    { "builder": "subwayPillar", "x": 6,   "z": -4 },
+    { "builder": "subwayPillar", "x": 12,  "z": -4 },
+    { "builder": "bench",        "x": -9,  "z": -1.5 },
+    { "builder": "bench",        "x": 3,   "z": -1.5 },
+    { "builder": "turnstiles",   "x": 0,   "z": 7,   "count": 5 },
+    { "builder": "trashBin",     "x": -3,  "z": -1.5 },
+    { "builder": "trashBin",     "x": 14.5, "z": 10.5 }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "casino",
+  "name": "The Brokjes Casino",
+  "lights": [
+    { "type": "ambient", "color": "0xffe8d0", "intensity": 0.4 },
+    { "type": "hemisphere", "color": "0xffd9a0", "groundColor": "0x3d0a14", "intensity": 0.4 },
+    {
+      "type": "directional",
+      "color": "0xffe8c8",
+      "intensity": 0.45,
+      "position": [8, 20, 10],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 20
+    },
+    { "type": "point", "color": "0xff4fa3", "intensity": 0.6, "distance": 14, "position": [-13, 4, 9] },
+    { "type": "point", "color": "0x4fc3ff", "intensity": 0.6, "distance": 14, "position": [13, 4, 9] }
+  ],
+  "floor": { "texture": "casinoCarpet", "roughness": 0.9 },
+  "ceiling": { "color": "0x1a0a10", "roughness": 0.9 },
+  "walls": { "texture": "casinoWall", "roughness": 0.6 },
+  "extras": [
+    { "type": "chandeliers" },
+    { "type": "neonSign", "text": "JACKPOT", "sub": "BROKJES CASINO", "color": "#8e44ad", "wall": "north", "at": 9, "y": 5.4 },
+    { "type": "neonSign", "text": "LUCKY CAT", "sub": "♣ ♦ ♥ ♠", "color": "#e84393", "wall": "south", "at": 0, "y": 5.4 },
+    { "type": "prizeWheel", "wall": "north", "at": -9, "y": 4.8 }
+  ],
+  "props": [
+    { "builder": "slotRow",       "x": -15.6, "z": 0,     "rotY": 1.5708,  "count": 7 },
+    { "builder": "slotRow",       "x": 15.6,  "z": 0,     "rotY": -1.5708, "count": 7 },
+    { "builder": "slotRow",       "x": -8,    "z": 11.8,  "rotY": 3.1416,  "count": 5 },
+    { "builder": "slotRow",       "x": 8,     "z": 11.8,  "rotY": 3.1416,  "count": 5 },
+    { "builder": "rouletteTable", "x": -7,    "z": -6 },
+    { "builder": "rouletteTable", "x": 7,     "z": -6 },
+    { "builder": "cardTable",     "x": -6,    "z": 4 },
+    { "builder": "cardTable",     "x": 6,     "z": 4 },
+    { "builder": "velvetRope",    "x": -2.5,  "z": -10.5, "rotY": 1.5708, "length": 4 },
+    { "builder": "velvetRope",    "x": 2.5,   "z": -10.5, "rotY": 1.5708, "length": 4 },
+    { "builder": "casinoBar",     "x": 12,    "z": -11 },
+    { "builder": "chipTower",     "x": -13,   "z": -10.5 },
+    { "builder": "chipTower",     "x": -14.5, "z": 10.8 },
+    { "builder": "chipTower",     "x": 14.5,  "z": 10.8 }
+  ]
+}

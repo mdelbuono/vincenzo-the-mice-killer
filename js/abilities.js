@@ -311,7 +311,7 @@ export class AbilityManager {
         );
         cheese.position.set(0, 0.15, 0.08);
         trap.add(wood, bar, cheese);
-        trap.position.set(cat.position.x, 0, cat.position.z);
+        trap.position.set(cat.position.x, cat.position.y, cat.position.z);
         trap.rotation.y = cat.rotationY;
         trap.traverse(o => { if (o.isMesh) o.castShadow = true; });
         g.scene.add(trap);

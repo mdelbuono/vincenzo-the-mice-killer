@@ -1,0 +1,42 @@
+{
+  "id": "harbour",
+  "name": "Container Harbour",
+  "sky": "0x8fbfe0",
+  "fogColor": "0xc0d8e8",
+  "fogDensity": 0.006,
+  "lights": [
+    { "type": "hemisphere", "color": "0xdff2ff", "groundColor": "0x0a3d62", "intensity": 0.6 },
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.15 },
+    {
+      "type": "directional",
+      "color": "0xfff1d0",
+      "intensity": 1.0,
+      "position": [18, 30, -12],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 24
+    }
+  ],
+  "floor": { "texture": "concrete", "roughness": 0.9 },
+  "ceiling": null,
+  "walls": { "texture": "concrete", "roughness": 0.9, "height": 1.5 },
+  "extras": [
+    { "type": "sun", "position": [50, 45, -70] },
+    { "type": "clouds" },
+    { "type": "sea" },
+    { "type": "seagulls" },
+    { "type": "windTurbines" }
+  ],
+  "props": [
+    { "builder": "containerShip",  "x": 2,   "z": 21 },
+    { "builder": "gantryCrane",    "x": -4,  "z": 8 },
+    { "builder": "containerStack", "x": -11, "z": -8,  "levels": 3, "rows": 2 },
+    { "builder": "containerStack", "x": -2,  "z": -8,  "levels": 2, "rows": 2 },
+    { "builder": "containerStack", "x": 7,   "z": -8,  "levels": 3, "rows": 2 },
+    { "builder": "containerStack", "x": 10,  "z": 6,   "rotY": 1.5708, "levels": 2, "rows": 1 },
+    { "builder": "containerStack", "x": -12, "z": 4,   "levels": 1, "rows": 1 },
+    { "builder": "bollard",        "x": -14, "z": 11.8 },
+    { "builder": "bollard",        "x": 4,   "z": 11.8 },
+    { "builder": "bollard",        "x": 12,  "z": 11.8 }
+  ]
+}

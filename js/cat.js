@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { getFurBumpTexture } from './graphics.js';
 import { buildOutfit, buildBlasterModel, buildSquirterModel, buildCatArmyHornModel, buildDivingMask } from './outfits.js';
 import { createNameTagTexture } from './textures.js';
 
@@ -96,8 +97,10 @@ export class Cat {
 
     buildModel() {
         const look = this.appearance;
-        const whiteFur = new THREE.MeshStandardMaterial({ color: look.fur, roughness: 0.45 });
-        const redSpotMat = new THREE.MeshStandardMaterial({ color: look.spots, roughness: 0.5 }); // Spots or stripes
+        // Matte fur with a hair bump map instead of shiny plastic
+        const fur = { roughness: 0.85, bumpMap: getFurBumpTexture(), bumpScale: 0.006 };
+        const whiteFur = new THREE.MeshStandardMaterial({ color: look.fur, ...fur });
+        const redSpotMat = new THREE.MeshStandardMaterial({ color: look.spots, ...fur }); // Spots or stripes
         const pinkMat = new THREE.MeshStandardMaterial({ color: 0xffb8b8, roughness: 0.7 });
         const eyeMat = new THREE.MeshStandardMaterial({ color: look.eyes, roughness: 0.1, emissive: look.eyes, emissiveIntensity: 0.3 });
         const collarMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c, roughness: 0.3 });
@@ -107,7 +110,7 @@ export class Cat {
         this.bodyGroup.position.y = 0.55;
 
         // White Torso
-        const torsoGeo = new THREE.SphereGeometry(0.55, 16, 12);
+        const torsoGeo = new THREE.SphereGeometry(0.55, 32, 24);
         torsoGeo.scale(0.8, 0.75, 1.4);
         const torso = new THREE.Mesh(torsoGeo, whiteFur);
         torso.castShadow = true;
@@ -123,7 +126,7 @@ export class Cat {
         this.headGroup = new THREE.Group();
         this.headGroup.position.set(0, 0.45, -0.85);
 
-        const headGeo = new THREE.SphereGeometry(0.42, 16, 14);
+        const headGeo = new THREE.SphereGeometry(0.42, 32, 24);
         const head = new THREE.Mesh(headGeo, whiteFur);
         head.castShadow = true;
         this.headGroup.add(head);
@@ -141,7 +144,7 @@ export class Cat {
         }
 
         // White Snout
-        const muzzleGeo = new THREE.SphereGeometry(0.2, 12, 10);
+        const muzzleGeo = new THREE.SphereGeometry(0.2, 24, 16);
         muzzleGeo.scale(1.2, 0.8, 1.1);
         const muzzle = new THREE.Mesh(muzzleGeo, whiteFur);
         muzzle.position.set(0, -0.1, -0.32);
@@ -180,7 +183,7 @@ export class Cat {
         this.headGroup.add(innerEarR);
 
         // Eyes
-        const eyeGeo = new THREE.SphereGeometry(0.09, 12, 12);
+        const eyeGeo = new THREE.SphereGeometry(0.09, 20, 16);
         const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
         eyeL.position.set(-0.16, 0.08, -0.35);
         this.headGroup.add(eyeL);
@@ -265,12 +268,12 @@ export class Cat {
             const legGroup = new THREE.Group();
             legGroup.position.set(lp.x, -0.15, lp.z);
 
-            const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.09, 0.4), whiteFur);
+            const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.09, 0.4, 16), whiteFur);
             upper.position.y = -0.12;
             upper.castShadow = true;
             legGroup.add(upper);
 
-            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), whiteFur);
+            const paw = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), whiteFur);
             paw.scale.set(1, 0.7, 1.3);
             paw.position.set(0, -0.32, -0.04);
             paw.castShadow = true;
@@ -289,7 +292,7 @@ export class Cat {
             if (s === 0) segGroup.position.set(0, 0.2, currentZ);
             else segGroup.position.set(0, 0.18, 0.22);
 
-            const segMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.07 - s * 0.012, 0.08 - s * 0.012, 0.3), whiteFur);
+            const segMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.07 - s * 0.012, 0.08 - s * 0.012, 0.3, 14), whiteFur);
             segMesh.rotation.x = Math.PI / 3;
             segMesh.position.set(0, 0.1, 0.1);
             segMesh.castShadow = true;

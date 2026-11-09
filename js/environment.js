@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { setMaterialHSL } from './graphics.js';
 import {
     createParquetTexture, createAtticFloorTexture, createBasementFloorTexture,
     createBasementWallTexture, createKitchenFloorTexture, createKitchenWallTexture,
@@ -8,8 +9,13 @@ import {
     createSupermarketFloorTexture, createSupermarketWallTexture, createDeckTexture, createHullTexture,
     createWaterTexture, createSpaceFloorTexture, createSpaceWallTexture, createDoorSignTexture,
     createProductsTexture, createStarfieldTexture, createPawFlagTexture,
-    createSandTexture, createReefWallTexture, createShopTagTexture, createIconTexture
+    createSandTexture, createReefWallTexture, createShopTagTexture, createIconTexture,
+    createCobblesTexture, createBrickTexture, createNycFacadeTexture, createSubwayTileTexture,
+    createCasinoCarpetTexture, createCasinoWallTexture
 } from './textures.js';
+import * as rotterdam from './rotterdam.js';
+import * as newyork from './newyork.js';
+import * as casino from './casino.js';
 import { Cat } from './cat.js';
 import { buildOutfit, buildBlasterModel, buildSquirterModel, buildCatArmyHornModel } from './outfits.js';
 
@@ -68,6 +74,7 @@ export class LevelEnvironment {
         this.animators = []; // functions (dt, time) for moving decorations
         this.doors = [];     // endless-mode doors to other rooms
         this.heightFn = null; // (x, z) => floor height, for stairs in passages
+        this.overheads = [];  // big things up high (cube houses), hidden in the top-down view
     }
 
     clearCurrentLevel() {
@@ -88,10 +95,11 @@ export class LevelEnvironment {
         this.animators = [];
         this.doors = [];
         this.heightFn = null;
+        this.overheads = [];
         this.wallHeight = DEFAULT_WALL_HEIGHT;
     }
 
-    // Height of the floor at (x, z): 0 everywhere except on the stairs of a passage
+    // Height of the floor at (x, z): 0 everywhere except on the stairs of a passage and on the Erasmus Bridge
     floorHeight(x, z) {
         return this.heightFn ? this.heightFn(x, z) : 0;
     }
@@ -189,8 +197,12 @@ export class LevelEnvironment {
             const f = envData.floor;
             let floorMat;
             if (f.texture) {
+                // The texture doubles as a bump map: grout lines and wood seams look recessed
+                const map = this._resolveTexture(f.texture);
                 floorMat = new THREE.MeshStandardMaterial({
-                    map: this._resolveTexture(f.texture),
+                    map,
+                    bumpMap: map,
+                    bumpScale: 0.015,
                     roughness: f.roughness !== undefined ? f.roughness : 0.5,
                     metalness: f.metalness !== undefined ? f.metalness : 0
                 });
@@ -226,8 +238,11 @@ export class LevelEnvironment {
             if (w.height) this.wallHeight = w.height;
             let wallMat;
             if (w.texture) {
+                const map = this._resolveTexture(w.texture);
                 wallMat = new THREE.MeshStandardMaterial({
-                    map: this._resolveTexture(w.texture),
+                    map,
+                    bumpMap: map,
+                    bumpScale: 0.01,
                     roughness: w.roughness !== undefined ? w.roughness : 0.7
                 });
             } else {
@@ -283,6 +298,12 @@ export class LevelEnvironment {
             case 'spaceWall':       return createSpaceWallTexture();
             case 'sand':            return createSandTexture();
             case 'reefWall':        return createReefWallTexture();
+            case 'cobbles':         return createCobblesTexture();
+            case 'brick':           return createBrickTexture();
+            case 'nycFacade':       return createNycFacadeTexture();
+            case 'subwayTiles':     return createSubwayTileTexture();
+            case 'casinoCarpet':    return createCasinoCarpetTexture();
+            case 'casinoWall':      return createCasinoWallTexture();
             default:
                 console.warn(`Unknown texture name: "${textureName}"`);
                 return null;
@@ -586,6 +607,22 @@ export class LevelEnvironment {
             case 'fishSchool':       this.buildFishSchool(extra); break;
             case 'shopBanner':       this.buildShopBanner(extra); break;
             case 'bunting':          this.buildBunting(); break;
+            // Rotterdam (js/rotterdam.js)
+            case 'erasmusBridge':    rotterdam.buildErasmusBridge(this); break;
+            case 'rotterdamSkyline': rotterdam.buildRotterdamSkyline(this, extra); break;
+            case 'markthalArch':     rotterdam.buildMarkthalArch(this); break;
+            case 'windTurbines':     rotterdam.buildWindTurbines(this); break;
+            // New York (js/newyork.js)
+            case 'nycSkyline':       newyork.buildNycSkyline(this, extra); break;
+            case 'redSteps':         newyork.buildRedSteps(this); break;
+            case 'timesSquareBillboards': newyork.buildTimesSquareBillboards(this); break;
+            case 'bowBridge':        newyork.buildBowBridge(this); break;
+            case 'subwayTracks':     newyork.buildSubwayTracks(this); break;
+            case 'ferry':            newyork.buildFerry(this); break;
+            // Casino (js/casino.js)
+            case 'chandeliers':      casino.buildChandeliers(this); break;
+            case 'neonSign':         casino.buildNeonSign(this, extra); break;
+            case 'prizeWheel':       casino.buildPrizeWheel(this, extra); break;
             default:
                 console.warn(`Unknown extra type: "${extra.type}"`);
         }
@@ -685,6 +722,33 @@ export class LevelEnvironment {
             case 'shopShowcase':     this.buildShopShowcase(x, z, prop.item); break;
             case 'giftPile':         this.buildGiftPile(x, z); break;
             case 'shopCounter':      this.buildShopCounter(x, z, prop.rotY || 0); break;
+            // Rotterdam (js/rotterdam.js)
+            case 'streetLamp':       rotterdam.buildStreetLamp(this, x, z); break;
+            case 'bench':            rotterdam.buildBench(this, x, z, prop.rotY || 0); break;
+            case 'bikeRack':         rotterdam.buildBikeRack(this, x, z, prop.rotY || 0); break;
+            case 'haringCart':       rotterdam.buildHaringCart(this, x, z, prop.rotY || 0); break;
+            case 'cubeHouse':        rotterdam.buildCubeHouse(this, x, z, prop.rotY || 0); break;
+            case 'pencilTower':      rotterdam.buildPencilTower(this, x, z); break;
+            case 'marketStall':      rotterdam.buildMarketStall(this, x, z, prop.goods, prop.rotY || 0); break;
+            case 'containerStack':   rotterdam.buildContainerStack(this, x, z, prop.rotY || 0, prop.levels, prop.rows); break;
+            case 'gantryCrane':      rotterdam.buildGantryCrane(this, x, z); break;
+            case 'containerShip':    rotterdam.buildContainerShip(this, x, z); break;
+            case 'bollard':          rotterdam.buildBollard(this, x, z); break;
+            // New York (js/newyork.js)
+            case 'taxi':             newyork.buildTaxi(this, x, z, prop.rotY || 0); break;
+            case 'hotDogCart':       newyork.buildHotDogCart(this, x, z, prop.rotY || 0); break;
+            case 'fireHydrant':      newyork.buildFireHydrant(this, x, z); break;
+            case 'subwayPillar':     newyork.buildSubwayPillar(this, x, z); break;
+            case 'turnstiles':       newyork.buildTurnstiles(this, x, z, prop.count); break;
+            case 'statueOfLiberty':  newyork.buildStatueOfLiberty(this, x, z); break;
+            case 'flagpole':         newyork.buildFlagpole(this, x, z); break;
+            // Casino (js/casino.js)
+            case 'slotRow':          casino.buildSlotRow(this, x, z, prop.rotY || 0, prop.count); break;
+            case 'rouletteTable':    casino.buildRouletteTable(this, x, z, prop.rotY || 0); break;
+            case 'cardTable':        casino.buildCardTable(this, x, z, prop.rotY || 0); break;
+            case 'chipTower':        casino.buildChipTower(this, x, z); break;
+            case 'velvetRope':       casino.buildVelvetRope(this, x, z, prop.rotY || 0, prop.length); break;
+            case 'casinoBar':        casino.buildCasinoBar(this, x, z, prop.rotY || 0); break;
             default:
                 console.warn(`Unknown prop builder: "${prop.builder}"`);
         }
@@ -1662,7 +1726,7 @@ export class LevelEnvironment {
         this.animate((dt, t) => {
             ring.rotation.z = t * 1.5;
             discMat.opacity = 0.45 + Math.sin(t * 6) * 0.2;
-            discMat.color.setHSL(0.52 + Math.sin(t * 2) * 0.08, 0.9, 0.6);
+            setMaterialHSL(discMat, 0.52 + Math.sin(t * 2) * 0.08, 0.9, 0.6);
         });
     }
 
@@ -2312,7 +2376,7 @@ export class LevelEnvironment {
                 ring.rotation.x = Math.PI / 2 + Math.sin(t * (1 + i * 0.4)) * 0.3;
                 ring.rotation.y = Math.cos(t * (1.2 + i * 0.3)) * 0.3;
             });
-            core.material.color.setHSL(0.5, 1, 0.4 + Math.sin(t * 3) * 0.1);
+            setMaterialHSL(core.material, 0.5, 1, 0.4 + Math.sin(t * 3) * 0.1);
         });
         this.addCollider(x, z, 3.2, 3.2);
     }

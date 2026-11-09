@@ -1,5 +1,11 @@
 import * as THREE from 'three';
-import { createParquetTexture, createGrassTexture, createRugTexture, createStarfieldTexture, createDoorSignTexture, createSandTexture } from './textures.js';
+import { setMaterialHSL } from './graphics.js';
+import {
+    createParquetTexture, createGrassTexture, createRugTexture, createStarfieldTexture, createDoorSignTexture, createSandTexture,
+    createCobblesTexture, createBrickTexture, createGlassFacadeTexture, createNycFacadeTexture, createConcreteTexture
+} from './textures.js';
+import { buildBikeRack, buildStreetLamp } from './rotterdam.js';
+import { buildTaxi, buildHotDogCart, buildFireHydrant } from './newyork.js';
 
 // Endless mode: the cat walks through a passage from one room to the next.
 // Every passage is a strip along the x axis: the cat comes in at the west end
@@ -21,6 +27,8 @@ export function passageType(fromRoom, toRoom) {
     const placeB = toRoom.place || 'house';
     if (placeA === 'space' || placeB === 'space') return 'teleport';
     if (placeA === 'sea' || placeB === 'sea') return 'dive';
+    if (placeA === 'city' && placeB === 'city') return 'street';
+    if (placeA === 'nyc' && placeB === 'nyc') return 'avenue';
     if (placeA === 'house' && placeB === 'house') {
         return (fromRoom.floor || 0) === (toRoom.floor || 0) ? 'corridor' : 'stairs';
     }
@@ -31,7 +39,7 @@ export function passageType(fromRoom, toRoom) {
 /**
  * Builds a passage in the environment (replacing the current room).
  * @param {LevelEnvironment} env
- * @param {string} type - 'corridor' | 'stairs' | 'path' | 'road' | 'teleport' | 'dive'
+ * @param {string} type - 'corridor' | 'stairs' | 'path' | 'road' | 'teleport' | 'dive' | 'street' | 'avenue'
  * @param {object} back  - the room the cat comes from: { id, label, place, floor }
  * @param {object} ahead - the room the passage leads to: { id, label, place, floor }
  */
@@ -53,6 +61,8 @@ export function buildPassage(env, type, back, ahead) {
         case 'road': buildRoad(env, doors); break;
         case 'teleport': buildTeleport(env, doors); break;
         case 'dive': buildDive(env, doors); break;
+        case 'street': buildStreet(env, doors); break;
+        case 'avenue': buildStreet(env, doors, true); break;
         default: buildCorridor(env, doors);
     }
     env.addDoors(doors);
@@ -422,7 +432,7 @@ function buildTeleport(env, doors) {
         rings.forEach((ring, i) => {
             ring.position.x += dt * 6;
             if (ring.position.x > LENGTH / 2) ring.position.x -= LENGTH;
-            ring.material.color.setHSL((0.5 + i * 0.05 + t * 0.1) % 1, 0.9, 0.6);
+            setMaterialHSL(ring.material, (0.5 + i * 0.05 + t * 0.1) % 1, 0.9, 0.6);
         });
         for (let i = 0; i < count; i++) {
             positions[i * 3] += dt * 12;
@@ -483,4 +493,119 @@ function buildDive(env, doors) {
     env._buildExtra({ type: 'bubbles' });
 
     doors.forEach(d => { d.style = 'door'; });
+}
+
+// Between two places in the city (Rotterdam): a sidewalk and a red bike lane past shop fronts,
+// with a tram riding by on the other side of the road.
+// newYork: the avenue of New York instead: a wide sidewalk, old buildings and yellow taxis driving past.
+function buildStreet(env, doors, newYork = false) {
+    setSky(env, 0x9ecbea, 0.008);
+    env.lightsGroup.add(new THREE.HemisphereLight(0xdff2ff, 0x6d6a66, 0.7));
+    env.lightsGroup.add(new THREE.AmbientLight(0xffffff, 0.2));
+    const sun = addLight(env, new THREE.DirectionalLight(0xfff2d0, 0.9), 8, 20, -10);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 1024;
+    sun.shadow.mapSize.height = 1024;
+    Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20 });
+    env._buildExtra({ type: 'clouds' });
+
+    // The road and the tram rails beyond the strip (north), the sidewalk and bike lane on it
+    const road = new THREE.Mesh(new THREE.PlaneGeometry(200, 40), std(0x3c3f44, { roughness: 0.95 }));
+    road.rotation.x = -Math.PI / 2;
+    road.position.set(0, -0.01, -HALF_WIDTH - 20);
+    env.roomGroup.add(road);
+    if (newYork) {
+        const concrete = createConcreteTexture();
+        concrete.repeat.set(8, 1.5);
+        addFloor(env, -LENGTH / 2, LENGTH / 2, 0.01, new THREE.MeshStandardMaterial({ map: concrete, color: 0xc8c8c8, roughness: 0.9 }));
+        buildNycStreetLife(env);
+    } else {
+        buildRotterdamStreetLife(env);
+    }
+    addMesh(env.roomGroup, new THREE.BoxGeometry(LENGTH, 0.25, 0.3), std(0xbdc3c7, { roughness: 0.8 }), 0, 0.12, -HALF_WIDTH - 0.15);
+
+    // A row of shop fronts with brick floors above (south)
+    const glass = createGlassFacadeTexture('#8fb3cf');
+    const facade = newYork ? createNycFacadeTexture() : null;
+    const awnings = [0xd63031, 0x0984e3, 0x27ae60, 0xf39c12, 0x8e44ad, 0xe84393];
+    const shops = newYork ? ['DELI', 'PIZZA', 'BAGELS', 'DINER', 'BOOKS', 'TOYS'] : ['BAKKER', 'FIETSEN', 'KAAS', 'FRITES', 'BLOEMEN', 'SNOEP'];
+    for (let i = 0; i < 6; i++) {
+        const x = -LENGTH / 2 + 2.9 + i * 5.7;
+        const h = (newYork ? 12 : 9) + (i % 3) * 2.5;
+        const brick = createBrickTexture();
+        brick.repeat.set(1.5, h / 4);
+        const map = newYork ? (i % 2 ? glass : facade) : (i % 2 ? glass : brick);
+        const front = new THREE.Mesh(new THREE.BoxGeometry(5.6, h, 4), new THREE.MeshStandardMaterial({ map, roughness: 0.8 }));
+        front.position.set(x, h / 2, HALF_WIDTH + 2);
+        front.receiveShadow = true;
+        env.roomGroup.add(front);
+        const shopWindow = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.4), std(0x2f3e4f, { roughness: 0.1, metalness: 0.5, emissive: 0x2a3b4c }));
+        shopWindow.position.set(x, 1.6, HALF_WIDTH - 0.01);
+        shopWindow.rotation.y = Math.PI;
+        env.roomGroup.add(shopWindow);
+        const awning = addMesh(env.roomGroup, new THREE.BoxGeometry(5, 0.08, 1.2), std(awnings[i]), x, 3.3, HALF_WIDTH - 0.5);
+        awning.rotation.x = -0.3;
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.7), new THREE.MeshBasicMaterial({ map: createDoorSignTexture(shops[i]) }));
+        sign.position.set(x, 4.2, HALF_WIDTH - 0.02);
+        sign.rotation.y = Math.PI;
+        env.roomGroup.add(sign);
+    }
+    [-11, 2, 14].forEach(x => buildStreetLamp(env, x, -HALF_WIDTH + 0.3));
+
+    // Walls at both ends with the doors in them
+    const endBrick = createBrickTexture();
+    endBrick.repeat.set(6, 2);
+    addEndWall(env, -LENGTH / 2, 26, 8, new THREE.MeshStandardMaterial({ map: endBrick, roughness: 0.9 }));
+    addEndWall(env, LENGTH / 2, 26, 8, new THREE.MeshStandardMaterial({ map: endBrick, roughness: 0.9 }));
+    doors.forEach(d => { d.style = 'door'; });
+}
+
+// Rotterdam: cobbles, a red bike lane, parked bikes and a tram on its rails
+function buildRotterdamStreetLife(env) {
+    const rail = std(0xc8ccd0, { metalness: 0.7, roughness: 0.3 });
+    [-5.2, -6.6].forEach(z => addMesh(env.roomGroup, new THREE.BoxGeometry(200, 0.06, 0.1), rail, 0, 0.03, z));
+    const cobbles = createCobblesTexture();
+    cobbles.repeat.set(5, 0.5);
+    const sidewalk = new THREE.Mesh(new THREE.PlaneGeometry(LENGTH, 3.6), new THREE.MeshStandardMaterial({ map: cobbles, roughness: 0.85 }));
+    sidewalk.rotation.x = -Math.PI / 2;
+    sidewalk.position.set(0, 0.01, 1.2);
+    sidewalk.receiveShadow = true;
+    env.roomGroup.add(sidewalk);
+    const bikeLane = new THREE.Mesh(new THREE.PlaneGeometry(LENGTH, 2.4), std(0xb5483b, { roughness: 0.9 }));
+    bikeLane.rotation.x = -Math.PI / 2;
+    bikeLane.position.set(0, 0.01, -1.8);
+    bikeLane.receiveShadow = true;
+    env.roomGroup.add(bikeLane);
+    const white = new THREE.MeshBasicMaterial({ color: 0xf5f6fa });
+    addMesh(env.roomGroup, new THREE.BoxGeometry(LENGTH, 0.02, 0.08), white, 0, 0.02, -0.6);
+
+    // Bikes, and a tram riding past
+    buildBikeRack(env, -6, HALF_WIDTH - 1.1, 0);
+    buildBikeRack(env, 9, HALF_WIDTH - 1.1, 0);
+    const tram = new THREE.Group();
+    addMesh(tram, new THREE.BoxGeometry(22, 2.6, 2.4), std(0xd8dde2, { roughness: 0.4 }), 0, 1.7, 0);
+    addMesh(tram, new THREE.BoxGeometry(22.05, 0.7, 2.45), std(0xc0392b, { roughness: 0.4 }), 0, 0.7, 0);
+    addMesh(tram, new THREE.BoxGeometry(21, 1.0, 2.46), std(0x2f3e4f, { roughness: 0.1, metalness: 0.5 }), 0, 2.2, 0);
+    addMesh(tram, new THREE.BoxGeometry(0.1, 1.2, 0.1), std(0x2d3436), 0, 3.6, 0);
+    tram.position.z = -5.9;
+    env.roomGroup.add(tram);
+    env.animate((dt, t) => { tram.position.x = ((t * 6) % 120) - 60; });
+}
+
+// New York: a hot dog cart, fire hydrants and yellow taxis driving past (both ways)
+function buildNycStreetLife(env) {
+    buildHotDogCart(env, -4, HALF_WIDTH - 1.0, Math.PI);
+    buildFireHydrant(env, 6, HALF_WIDTH - 0.6);
+    buildFireHydrant(env, -13, HALF_WIDTH - 0.6);
+    const white = new THREE.MeshBasicMaterial({ color: 0xf5f6fa });
+    for (let x = -60; x < 60; x += 4) addMesh(env.roomGroup, new THREE.BoxGeometry(2, 0.02, 0.15), white, x, 0.01, -8);
+    const taxis = [
+        { g: buildTaxi(env, 0, -6, 0), speed: 9, offset: 0, z: -6 },
+        { g: buildTaxi(env, 0, -10, Math.PI), speed: -7, offset: 50, z: -10 },
+        { g: buildTaxi(env, 0, -6, 0), speed: 9, offset: 70, z: -6 }
+    ];
+    env.animate((dt, t) => taxis.forEach(c => {
+        const x = (((t * Math.abs(c.speed) + c.offset) % 140) + 140) % 140 - 70;
+        c.g.position.set(c.speed > 0 ? x : -x, 0, c.z);
+    }));
 }

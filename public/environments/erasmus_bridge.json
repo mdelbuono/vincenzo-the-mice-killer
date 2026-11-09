@@ -1,0 +1,41 @@
+{
+  "id": "erasmus_bridge",
+  "name": "Erasmus Bridge",
+  "sky": "0x9ecbea",
+  "fogColor": "0xc8dcea",
+  "fogDensity": 0.006,
+  "lights": [
+    { "type": "hemisphere", "color": "0xdff2ff", "groundColor": "0x3d5a6c", "intensity": 0.65 },
+    { "type": "ambient", "color": "0xffffff", "intensity": 0.15 },
+    {
+      "type": "directional",
+      "color": "0xfff1d0",
+      "intensity": 1.0,
+      "position": [-14, 30, 12],
+      "castShadow": true,
+      "shadowMapSize": 2048,
+      "shadowCameraSize": 24
+    }
+  ],
+  "floor": null,
+  "ceiling": null,
+  "walls": null,
+  "extras": [
+    { "type": "sun", "position": [-50, 45, -70] },
+    { "type": "clouds" },
+    { "type": "seagulls" },
+    { "type": "erasmusBridge" },
+    { "type": "rotterdamSkyline", "river": true }
+  ],
+  "props": [
+    { "builder": "streetLamp", "x": -12.2, "z": -7 },
+    { "builder": "streetLamp", "x": -12.2, "z": 7 },
+    { "builder": "streetLamp", "x": 12.2,  "z": -7 },
+    { "builder": "streetLamp", "x": 12.2,  "z": 7 },
+    { "builder": "bikeRack",   "x": -14.8, "z": -8.5, "rotY": 1.5708 },
+    { "builder": "bench",      "x": -15.6, "z": 7,    "rotY": 1.5708 },
+    { "builder": "bench",      "x": -15.6, "z": 11,   "rotY": 1.5708 },
+    { "builder": "haringCart", "x": 14.8,  "z": -8.5, "rotY": -1.5708 },
+    { "builder": "bikeRack",   "x": 14.8,  "z": 9,    "rotY": -1.5708 }
+  ]
+}
